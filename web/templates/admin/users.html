@@ -1,0 +1,33 @@
+<!-- web/templates/admin/users.html -->
+{% extends 'base.html' %}
+
+{% block title %}User Management{% endblock %}
+
+{% block content %}
+<section class="usa-section">
+    <h2 class="usa-heading">User Management</h2>
+    <a href="{{ url_for('admin.add_user') }}" class="usa-button">Add New User</a>
+    <table class="usa-table">
+        <thead>
+            <tr>
+                <th>Email</th>
+                <th>User Type</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for user in users %}
+            <tr>
+                <td>{{ user.email }}</td>
+                <td>{{ user.user_type.name }}</td>
+                <td>
+                    <form action="{{ url_for('admin.delete_user', user_id=user.user_id) }}" method="post" style="display:inline;">
+                        <button type="submit" class="usa-button usa-button--secondary">Delete</button>
+                    </form>
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</section>
+{% endblock %}

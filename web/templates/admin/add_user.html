@@ -1,0 +1,21 @@
+<!-- web/templates/admin/add_user.html -->
+{% extends 'base.html' %}
+
+{% block title %}Add User{% endblock %}
+
+{% block content %}
+<section class="usa-section">
+    <h2 class="usa-heading">Add User</h2>
+    <form method="POST" class="usa-form">
+        <label for="email" class="usa-label">Email:</label>
+        <input type="email" name="email" class="usa-input" required>
+        <label for="user_type" class="usa-label">User Type:</label>
+        <select name="user_type" class="usa-select">
+            {% for type in user_types %}
+                <option value="{{ type.name }}">{{ type.name }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit" class="usa-button">Add User</button>
+    </form>
+</section>
+{% endblock %}

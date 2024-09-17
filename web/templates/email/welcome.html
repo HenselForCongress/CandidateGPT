@@ -1,0 +1,16 @@
+<!-- web/templates/email/welcome.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Welcome to CandidateGPT!</title>
+</head>
+<body>
+    <p>Dear {{ user.email }},</p>
+    <p>Welcome to CandidateGPT! Your account has been created.</p>
+    <p>Your temporary password is: <strong>{{ temp_password }}</strong></p>
+    <p>Please log in and change your password as soon as possible.</p>
+    <p><a href="{{ url_for('auth.login', _external=True) }}">Log In</a></p>
+    <p>Thank you!</p>
+</body>
+</html>

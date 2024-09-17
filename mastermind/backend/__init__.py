@@ -1,6 +1,5 @@
 # mastermind/backend/__init__.py
 from flask import Blueprint, request, jsonify
-import requests
 import yaml
 from dotenv import load_dotenv
 from mastermind.data_manager.load import load_data
@@ -26,7 +25,8 @@ def ask_question():
     response_type = request.json.get('response_type')
 
     # Find the appropriate prompt suffix based on response type
-    response_prompt = next((option['prompt'] for option in config['options']['response'] if option['name'] == response_type), "")
+    response_option = next((option for option in config['options']['response'] if option['name'] == response_type), None)
+    response_prompt = response_option['prompt'] if response_option else ""
 
     # Append the suffix to the prompt
     full_prompt = f"{user_question} {response_prompt}"
@@ -50,5 +50,11 @@ def reload_data():
 @api_bp.route('/api/response-types')
 def get_response_types():
     """Get the list of response types from the configuration"""
-    response_types = [option['name'] for option in config['options']['response']]
+    response_types = [
+        {
+            'name': option['name'],
+            'about': option.get('about', ''),
+        }
+        for option in config['options']['response']
+    ]
     return jsonify({'response_types': response_types})

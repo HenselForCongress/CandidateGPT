@@ -21,6 +21,8 @@ how to help
 note on current status
 
 
+Run Security Test
+`poetry run bandit -r .`
 
 
 ## License

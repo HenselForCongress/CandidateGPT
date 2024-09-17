@@ -1,0 +1,14 @@
+<!-- web/templates/email/invitation.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>You are Invited!</title>
+</head>
+<body>
+    <p>Dear User,</p>
+    <p>You have been invited to join our platform. Please click the link below to set up your account:</p>
+    <p><a href="{{ url_for('auth.complete_registration', token=token, _external=True) }}">Complete Registration</a></p>
+    <p>Thank you!</p>
+</body>
+</html>

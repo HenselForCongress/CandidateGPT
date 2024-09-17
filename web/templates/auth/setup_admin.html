@@ -1,0 +1,45 @@
+<!-- web/templates/auth/setup_admin.html -->
+{% extends 'base.html' %}
+
+{% block title %}Setup Admin{% endblock %}
+
+{% block content %}
+<section class="usa-section">
+    <h2 class="usa-heading">Setup Admin Account</h2>
+
+    <!-- Display Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <ul class="usa-alert-list">
+          {% for category, message in messages %}
+            <li class="usa-alert usa-alert--{{ category }}">
+              <div class="usa-alert__body">
+                <p class="usa-alert__text">{{ message }}</p>
+              </div>
+            </li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
+
+    <!-- Display Form Errors -->
+    {% if form.errors %}
+      <ul class="usa-alert usa-alert--error">
+        {% for field_errors in form.errors.values() %}
+          {% for error in field_errors %}
+            <li>{{ error }}</li>
+          {% endfor %}
+        {% endfor %}
+      </ul>
+    {% endif %}
+
+    <form method="POST" class="usa-form">
+        {{ form.hidden_tag() }}
+        <label for="email" class="usa-label">{{ form.email.label }}</label>
+        {{ form.email(class="usa-input") }}
+        <label for="password" class="usa-label">{{ form.password.label }}</label>
+        {{ form.password(class="usa-input") }}
+        <button type="submit" class="usa-button">Create Admin Account</button>
+    </form>
+</section>
+{% endblock %}
