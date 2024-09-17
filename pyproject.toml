@@ -1,3 +1,4 @@
+# pyproject.toml
 [tool.poetry]
 name = "candidategpt"
 version = "0.1.0"
@@ -18,11 +19,19 @@ flask-sqlalchemy = "^3.1.1"
 flask-migrate = "^4.0.7"
 werkzeug = "^3.0.4"
 botocore = "^1.35.21"
+sqlalchemy-utils = "^0.41.2"
+marshmallow = "^3.22.0"
+flask-login = "^0.6.3"
+psycopg2 = "^2.9.9"
+flask-wtf = "^1.2.1"
+flask-limiter = "^3.8.0"
+email-validator = "^2.2.0"
 
 
 [tool.poetry.group.dev.dependencies]
 python-dotenv = "^1.0.1"
 pytest = "^8.3.3"
+bandit = "^1.7.9"
 
 [build-system]
 requires = ["poetry-core"]
