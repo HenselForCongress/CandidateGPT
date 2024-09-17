@@ -1,0 +1,11 @@
+Source: https://friendsofdonbeyer.com/health-care/
+Title:  Healthcare
+
+
+I have long advocated for healthcare legislation that makes universal, affordable care a reality. President Obama’s Affordable Care Act, signed into law in 2010, marked the biggest step forward in US healthcare in decades: tens of millions of uninsured Americans received coverage for the first time. Insurance companies had to accept applicants for health coverage, regardless of preexisting conditions, and they could not charge women more for the same coverage, as had been common practice. Recent Medicaid expansion by the Virginia General Assembly and Governor Northam brought healthcare coverage to hundreds of thousands of Virginians, and today, thanks to the Biden-Harris Administration’s work to boost signups, more Americans are insured than ever before.
+
+I am working with the Democratic Caucus to build on that progress and make affordable, accessible health care fully universal. I introduced the Choose Medicare Act to do just that, and am a proud co-sponsor of Medicare for All. I have also championed legislation to lower prescription drug costs and, in the midst of COVID-19, successfully introduced and passed legislation to ensure vaccines would be available for free. I also introduced legislation to study long-term COVID effects, legislation requiring proof of vaccination or a negative test before boarding a domestic flight, and a separate bill to drastically increase Americans’ access to free at-home rapid testing.
+
+Mental health has been an area of particular focus for my work in Congress. The spike in suicides and mental illness during the COVID-19 pandemic makes this issue even more pressing. The rate of suicide is at a 30-year high, and it is the 10th leading cause of death in the United States, and 2nd in people under 35, with half of the 47,000 reported annual suicides caused by firearms. I am the founding co-chair of the House Suicide Prevention Task Force, which works to increase funding for suicide prevention programs. I helped establish the 3-digit suicide prevention lifeline phone number and expand mental health education campaigns, and my bipartisan legislation to educate the public about this important forthcoming resource passed in the House last year.
+
+###

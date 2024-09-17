@@ -1,0 +1,76 @@
+.DS_Store
+.env
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Packages
+*.egg
+*.egg-info/
+dist/
+build/
+eggs/
+parts/
+var/
+lib/
+installed.cfg
+*.egg
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# pyenv
+.python-version
+
+# Environments
+.env
+.venv/
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Flask files
+instance/
+.webassets-cache
+
+# Docker
+**/Dockerfile
+**/docker-compose.yml
+
+# Other Windows files
+Thumbs.db
+ehthumbs.db
+
+# Python build files
+*.buildinfo
+*.log
+*.conf
+*.mo
+*.pot
+*.qmlc
+*.qml
+*.qbs
+*.qrc
+*.ts
+*.txt
+*.txt~
+*.xml
+*.xsd
+*.xslt
+
+# Archive files
+*.zip
+*.tar.gz
+*.tar.bz2
+*.tar.xz
+
+# R versions
+.Rproj.user/

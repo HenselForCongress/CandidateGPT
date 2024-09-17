@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "candidategpt"
+version = "0.1.0"
+description = "AI Debate Standin for political candidates"
+authors = ["Hensel for Congress <team@henselforcongress.com>"]
+license = "AGPL-3.0"
+readme = "README.md"
+package-mode = false
+
+[tool.poetry.dependencies]
+python = "^3.12"
+flask = "^3.0.3"
+requests = "^2.32.3"
+pyyaml = "^6.0.2"
+
+
+[tool.poetry.group.dev.dependencies]
+python-dotenv = "^1.0.1"
+pytest = "^8.3.3"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
