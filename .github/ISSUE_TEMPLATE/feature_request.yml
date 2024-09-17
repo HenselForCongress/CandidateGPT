@@ -1,0 +1,72 @@
+name: 🚀 Feature Request or Improvement
+description: Submit ideas for improved functionality or new features to the RapidATO project.
+title: "<Title of Feature Request>"
+labels: [🤔 Unrefined, 🧚 Feature Request, 🗳️ Feedback Needed, 🚀 Product]
+assignees: [product]
+
+body:
+  - type: textarea
+    attributes:
+      label: Problem
+      description: Describe the problem you're facing or the improvement you would like to see.
+      placeholder: |
+        e.g.,
+        Currently, there is no way to schedule automatic backups, making it time-consuming to manually create backups.
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Proposed Solution
+      description: Describe your proposed solution or feature.
+      placeholder: |
+        e.g.,
+        Add a scheduling feature that allows users to automatically backup data at regular intervals.
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Benefits
+      description: Describe the expected benefits of your proposed solution.
+      placeholder: |
+        e.g.,
+        - Automated backup scheduling
+        - Time-saving
+        - Reduced risk of data loss
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Acceptance Criteria
+      description: Define clear criteria to know if your feature request is complete.
+      placeholder: |
+        e.g.,
+        - Users can schedule automatic backups (daily, weekly, monthly)
+        - Users receive notifications when backups are complete
+        - Backups can be easily restored by the user
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Resources (optional)
+      description: Provide any relevant links, articles, or resources.
+      placeholder: |
+        e.g.,
+        - [Example article on data backup best practices](https://www.example.com/data-backup-best-practices)
+        - [Competitor's scheduling feature](https://www.competitor.com/scheduled-backups)
+    validations:
+      required: false
+
+  - type: textarea
+    attributes:
+      label: Team (optional)
+      description: List the teams or roles involved in implementing this feature.
+      placeholder: |
+        - Product Manager
+        - Development Team
+        - Customer Support Team
+    validations:
+      required: false

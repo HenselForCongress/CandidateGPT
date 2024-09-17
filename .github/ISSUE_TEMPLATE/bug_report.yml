@@ -1,0 +1,74 @@
+name: 🐛 Bug Report
+description: File a bug/issue
+title: "[BUG] <brief description of the bug>"
+labels: [🐛 Bug, 🤔 Unrefined]
+
+body:
+  - type: checkboxes
+    attributes:
+      label: Is there an existing issue for this?
+      description: Please search to see if an issue already exists for the bug you encountered.
+      options:
+        - label: I have searched the existing issues
+          required: true
+
+  - type: textarea
+    attributes:
+      label: What Happened?
+      description: Describe what went wrong.
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: What Should Have Happened?
+      description: Describe what you expected to happen instead.
+    validations:
+      required: false
+
+  - type: textarea
+    attributes:
+      label: Steps to Reproduce
+      description: Describe the steps that lead to the problem.
+      placeholder: |
+        1. Open the app and go to...
+        2. Click on...
+        3. Observe the issue...
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Device Information
+      description: Provide information about your device.
+      placeholder: |
+        e.g.
+        - **Device**: iPhone 12, Samsung Galaxy S21, etc.
+        - **OS Version**: iOS 15, Android 11, etc.
+        - **App version**: 1.2.3
+      render: markdown
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Additional Information (optional)
+      description: Any other details or context that might help us understand the issue.
+    validations:
+      required: false
+
+  - type: dropdown
+    id: team
+    attributes:
+      label: Which part of the app has the issue?
+      description: Select the area of the app where you encountered the issue.
+      multiple: false
+      options:
+        - 🖼️ Front End
+        - 🍄 Back End
+        - ♿ Accessibility
+        - 🏰 Security
+        - 🎨 Design
+        - Unknown/TBD/Other
+    validations:
+      required: true

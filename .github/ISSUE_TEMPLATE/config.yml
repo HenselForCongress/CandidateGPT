@@ -1,0 +1,11 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Hensel for Congress Website
+    url: https://henselforcongress.com/?utm_source=github&utm_medium=issue_link&utm_campaign=open_source
+    about: The main website for Hensel for Congress
+  - name: Contact Campaign
+    url: https://henselforcongress.com/contact?utm_source=github&utm_medium=issue_link&utm_campaign=open_source
+    about: Contact the campaign directly
+  - name: Get Involved
+    url: https://henselforcongress.com/get-involved?utm_source=github&utm_medium=issue_link&utm_campaign=open_source
+    about: Volunteer or help the campaign

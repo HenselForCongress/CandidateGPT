@@ -1,0 +1,39 @@
+<!-- web/templates/index.html -->
+
+{% extends 'base.html' %}
+
+{% block title %}Home - CandidateGPT{% endblock %}
+
+{% block content %}
+<div class="content-container">
+    <section class="usa-section">
+        <h3 class="section-title">Instructions</h3>
+        <p>Type your question in the box below and select the desired response type.</p>
+    </section>
+
+    <h2 class="usa-heading">Ask Don Beyer a Question</h2>
+
+    <form id="questionForm" class="usa-form">
+    <div class="form-container">
+        <div class="question-input">
+            <label for="questionInput" class="usa-label">Your Question:</label>
+            <textarea id="questionInput" placeholder="Type your question here..." class="usa-textarea" required></textarea>
+        </div>
+
+        <div class="response-type">
+            <label class="usa-label">Response Type:</label>
+            <div id="responseTypeOptions" class="response-type-options">
+                <!-- Radio buttons will be dynamically inserted here -->
+            </div>
+        </div>
+    </div>
+
+    <button type="submit" class="usa-button">Ask</button>
+</form>
+
+        <div id="response" class="response-area mt-4"></div>
+
+        <button id="reloadConfig" class="usa-button usa-button--outline mt-2">Reload Config</button>
+        <button id="reloadData" class="usa-button usa-button--outline mt-2">Reload Data</button>
+    </div>
+    {% endblock %}
