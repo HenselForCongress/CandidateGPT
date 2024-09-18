@@ -65,21 +65,38 @@ document.getElementById('questionForm').onsubmit = async function(event) {
     // Get the selected response type
     const responseType = document.querySelector('input[name="responseType"]:checked').value;
 
+    // Get the CSRF token
+    const csrfToken = document.querySelector('input[name="csrf_token"]').value;
+
     // Show loading indicator before initiating the fetch
     responseContainer.innerHTML = '<div class="loading-spinner"></div>';
     responseContainer.style.display = 'block';
 
     try {
+        console.log('Sending request to /api/ask with:', { question: questionInput, response_type: responseType });
+
         const response = await fetch('/api/ask', {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken  // Include CSRF token in the headers
+            },
             body: JSON.stringify({ question: questionInput, response_type: responseType })
         });
+
+        console.log('Received response:', response);
+        console.log('Response status:', response.status);
+        const responseText = await response.text();
+        console.log('Response text:', responseText);
+
+        if (!response.ok) {
+            throw new Error(`Server responded with ${response.status}: ${responseText}`);
+        }
 
         // Clear the loading indicator
         responseContainer.innerHTML = '';
 
-        const data = await response.json();
+        const data = JSON.parse(responseText); // Manually parse JSON
         let { answer, warning, links } = data;
 
         if (warning) {
@@ -107,8 +124,8 @@ document.getElementById('questionForm').onsubmit = async function(event) {
 
         responseContainer.style.display = 'block';
     } catch (error) {
-        // Handle errors gracefully
-        responseContainer.innerHTML = '<div class="error-message">An error occurred while fetching the response. Please try again later.</div>';
+        console.error('Error during fetch:', error);
+        responseContainer.innerHTML = `<div class="error-message">${error.message}</div>`;
     }
 };
 

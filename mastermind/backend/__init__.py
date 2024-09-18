@@ -5,6 +5,9 @@ import yaml
 from mastermind.data_manager.load import load_data
 from mastermind.ai_model import generate_response
 from mastermind import logger
+from flask_wtf.csrf import CSRFProtect
+
+csrf = CSRFProtect()
 
 # load_dotenv()
 
@@ -30,24 +33,37 @@ config = load_config()
 
 @api_bp.route('/api/ask', methods=['POST'])
 def ask_question():
-    """Handle the question from the user and return an answer."""
-    user_question = request.json.get('question')
-    response_type = request.json.get('response_type')
-
-    logger.debug(f"Received question: {user_question} with response type: {response_type}")
-
-    response_option = next((option for option in config['options']['response'] if option['name'] == response_type), None)
-    response_prompt = response_option['prompt'] if response_option else ""
-
-    full_prompt = f"{user_question} {response_prompt}"
-    logger.info(f"Full prompt generated: {full_prompt}")
+    # Log entry into the function
+    logger.debug('Entered /api/ask endpoint.')
+    logger.debug(f'Headers: {request.headers}')
+    logger.debug(f'Request data (raw): {request.data}')
+    logger.debug(f'JSON data (parsed): {request.get_json()}')
 
     try:
+        user_question = request.json.get('question')
+        response_type = request.json.get('response_type')
+
+        user_question = request.json.get('question')
+        response_type = request.json.get('response_type')
+
+        # Log extracted values
+        logger.debug(f"Extracted question: {user_question}")
+        logger.debug(f"Extracted response_type: {response_type}")
+
+        response_option = next((option for option in config['options']['response'] if option['name'] == response_type), None)
+        response_prompt = response_option['prompt'] if response_option else ""
+
+        full_prompt = f"{user_question} {response_prompt}"
+        logger.info(f"Full prompt generated: {full_prompt}")
+
+        # Generate the AI response
         response = generate_response(full_prompt, data, config)
         logger.info(f"Response generated successfully for question: {user_question}")
+
         return jsonify(response)
+
     except Exception as e:
-        logger.error(f"Error generating response: {e}")
+        logger.error(f"Error generating response: {e}", exc_info=True)
         return jsonify({'error': 'Failed to generate response.'}), 500
 
 @api_bp.route('/api/reload-config')

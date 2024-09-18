@@ -22,6 +22,7 @@
     <h2 class="usa-heading">Ask Don Beyer a Question</h2>
 
     <form id="questionForm" class="usa-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"> <!-- Hidden CSRF token -->
         <div class="form-container">
             <div class="question-input">
                 <label for="questionInput" class="usa-label">Your Question:</label>
