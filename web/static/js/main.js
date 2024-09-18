@@ -4,6 +4,12 @@ async function fetchData(endpoint) {
     const response = await fetch(endpoint);
     const data = await response.json();
     alert(data.message);
+
+    // Track reload button click
+    gtag('event', 'click', {
+        'event_category': 'Button',
+        'event_label': endpoint.includes('config') ? 'Reload Config' : 'Reload Data'
+    });
 }
 
 async function loadResponseTypes() {
@@ -44,6 +50,15 @@ async function loadResponseTypes() {
         optionWrapper.appendChild(label);
 
         responseTypeContainer.appendChild(optionWrapper);
+
+        // Add event listener to track response type change
+        input.addEventListener('change', function() {
+            gtag('event', 'change', {
+                'event_category': 'Settings',
+                'event_label': 'Response Type Changed',
+                'value': type.name
+            });
+        });
     });
 }
 
@@ -71,6 +86,13 @@ document.getElementById('questionForm').onsubmit = async function(event) {
     // Show loading indicator before initiating the fetch
     responseContainer.innerHTML = '<div class="loading-spinner"></div>';
     responseContainer.style.display = 'block';
+
+    // Track form submission event
+    gtag('event', 'submit', {
+        'event_category': 'Queries',
+        'event_label': 'Query Submitted',
+        'value': responseType
+    });
 
     try {
         console.log('Sending request to /api/ask with:', { question: questionInput, response_type: responseType });
@@ -140,10 +162,22 @@ document.getElementById('questionInput').addEventListener('keypress', function(e
 // Add event listeners for the reload buttons
 document.getElementById('reloadConfig').addEventListener('click', function() {
     fetchData('/api/reload-config');
+
+    // Track reload config button click
+    gtag('event', 'click', {
+        'event_category': 'Button',
+        'event_label': 'Reload Config'
+    });
 });
 
 document.getElementById('reloadData').addEventListener('click', function() {
     fetchData('/api/reload-data');
+
+    // Track reload data button click
+    gtag('event', 'click', {
+        'event_category': 'Button',
+        'event_label': 'Reload Data'
+    });
 });
 
 // Load response types on page load
