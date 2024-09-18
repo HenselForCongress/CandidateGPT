@@ -1,6 +1,7 @@
 # web/app.py
-from flask import Blueprint, render_template, request
+from flask import Blueprint, render_template, request, redirect, url_for
 from mastermind.utils import logger
+from flask_login import current_user, login_required
 
 web_bp = Blueprint('web_bp', __name__)
 
@@ -10,6 +11,17 @@ def index():
     logger.info("🎵 It's a perfect night, the user's visiting the main page.")
     try:
         return render_template('index.html')
+    except Exception as e:
+        logger.error("💔 Oops, something went wrong while rendering the main page: %s", e)
+        return "An error occurred", 500
+
+@web_bp.route('/chat')
+@login_required
+def chat():
+    """Render the main page."""
+    logger.info("🎵 It's a perfect night, the user's visiting the chat page.")
+    try:
+        return render_template('chat.html')
     except Exception as e:
         logger.error("💔 Oops, something went wrong while rendering the main page: %s", e)
         return "An error occurred", 500
