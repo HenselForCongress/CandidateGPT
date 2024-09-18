@@ -14,6 +14,7 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy_utils import database_exists, create_database
 from werkzeug.middleware.proxy_fix import ProxyFix
 
+# Imported modules from your project
 from web.auth import auth_bp, login_manager, limiter
 from .utils import configure_logger, logger, test_logger
 from .models import db, migrate
@@ -21,6 +22,7 @@ from web.admin import csrf
 from .backend import api_bp
 from web.app import web_bp
 from web.admin import admin_bp
+
 
 def apply_migrations():
     """Run Alembic migrations using subprocess."""
@@ -35,17 +37,20 @@ def apply_migrations():
             timeout=300  # Timeout after 5 minutes
         )
 
-        logger.info(f"Alembic output: {result.stdout.decode()}")
+        logger.info(f"Alembic output:\n{result.stdout.decode()}")
         logger.info("Database migrations applied successfully.")
     except subprocess.TimeoutExpired as e:
         logger.error(f"Alembic command timed out: {str(e)}", exc_info=True)
         raise
     except subprocess.CalledProcessError as e:
-        logger.error(f"Error applying database migrations: {e.stderr.decode()}", exc_info=True)
+        logger.error(f"Alembic command failed with non-zero exit status.")
+        logger.error(f"Alembic stdout:\n{e.stdout.decode() if e.stdout else 'No stdout available'}")
+        logger.error(f"Alembic stderr:\n{e.stderr.decode() if e.stderr else 'No stderr available'}", exc_info=True)
         raise
     except Exception as e:
         logger.error(f"Unexpected error during alembic migration: {str(e)}", exc_info=True)
         raise
+
 
 def begin_era():
     """Create and configure an instance of the Flask application."""
