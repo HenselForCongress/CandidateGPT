@@ -23,6 +23,7 @@ login_manager.session_protection = 'strong'
 
 @login_manager.user_loader
 def load_user(user_id):
+    logger.debug(f"Loading user with id: {user_id}")
     return User.query.get(user_id)
 
 # Initialize Flask-Limiter
@@ -30,12 +31,14 @@ limiter = Limiter(key_func=get_remote_address)
 
 # Password strength validation function
 def is_strong_password(password):
+    logger.debug("Validating password strength.")
     # Password must be at least 42 characters long, contain uppercase, lowercase, digit, and special character
     if (len(password) < 42 or
         not re.search(r'[A-Z]', password) or
         not re.search(r'[a-z]', password) or
         not re.search(r'\d', password) or
         not re.search(r'[!@#$%^&*(),.?":{}|<>]', password)):
+        logger.warning("Weak password attempted.")
         return False
     return True
 
@@ -60,19 +63,23 @@ class ResetPasswordForm(FlaskForm):
 def login():
     # Check if any users exist
     user_count = User.query.count()
+    logger.debug(f"Number of users in the system: {user_count}")
     if user_count == 0:
         flash('No users found. Please create an admin account.', 'info')
+        logger.info("No users found in the system. Redirecting to setup admin.")
         return redirect(url_for('auth.setup_admin'))
 
     if current_user.is_authenticated:
+        logger.info(f"User {current_user.email} is already authenticated. Redirecting to main page.")
         return redirect(url_for('web_bp.index'))
 
     form = LoginForm()
     if form.validate_on_submit():
         email = form.email.data
         password = form.password.data
+        logger.debug(f"Login attempt with email: {email}")
 
-        user = User.query.filter_by(email=email).first()
+        user = User.query.filter_by(email=email, _is_active=True).first()
         if user and user.check_password(password):
             login_user(user)
             logger.info(f"User {user.email} logged in from IP {request.remote_addr}.")
@@ -93,6 +100,7 @@ def setup_admin():
     logger.debug(f"User count: {user_count}")
     if user_count > 0:
         flash('Admin account already exists. Please log in.', 'info')
+        logger.info("Admin account already exists. Redirecting to login.")
         return redirect(url_for('auth.login'))
 
     form = SetupAdminForm()
@@ -162,6 +170,8 @@ def password_reset_request():
                 token=token
             )
             logger.info(f"Password reset email sent to {user.email} from IP {request.remote_addr}.")
+        else:
+            logger.warning(f"Password reset requested for non-existent email: {email} from IP {request.remote_addr}.")
         flash('If your email is registered, you will receive a password reset link.', 'info')
         return redirect(url_for('auth.login'))
     return render_template('auth/password_reset_request.html', form=form)
@@ -171,6 +181,7 @@ def password_reset_request():
 def reset_password(token):
     email = confirm_token(token, salt='password-reset')
     if not email:
+        logger.error("💔 Invalid or expired password reset link.")
         flash('The password reset link is invalid or has expired.', 'danger')
         return redirect(url_for('auth.password_reset_request'))
 
@@ -181,6 +192,7 @@ def reset_password(token):
         password = form.password.data
 
         if not is_strong_password(password):
+            logger.warning(f"Weak password attempt during reset for user {email}.")
             flash('Password must be at least 42 characters long and include uppercase, lowercase, number, and special character.', 'danger')
             return render_template('auth/reset_password.html', form=form)
 

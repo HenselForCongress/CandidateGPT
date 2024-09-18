@@ -1,6 +1,6 @@
 # mastermind/models.py
 from datetime import datetime
-from flask import request
+from flask import request, current_app
 from werkzeug.security import generate_password_hash, check_password_hash
 import uuid
 import enum
@@ -19,7 +19,9 @@ migrate = Migrate()
 
 def generate_uuid():
     """Generate a unique UUID."""
-    return str(uuid.uuid4())
+    uuid_generated = str(uuid.uuid4())
+    logger.debug(f"Generated UUID: {uuid_generated}")
+    return uuid_generated
 
 class UserTypeEnum(enum.Enum):
     ADMIN = "Admin"
@@ -67,12 +69,12 @@ class User(db.Model, UserMixin):
 
     def set_password(self, password):
         """Hash and set the user's password."""
-        current_app.logger.debug(f"Setting password for user {self.email}")
+        logger.debug(f"Setting password for user {self.email}")
         self.password_hash = generate_password_hash(password)
 
     def check_password(self, password):
         """Check if the provided password matches the stored hash."""
-        current_app.logger.debug(f"Checking password for user {self.email}")
+        logger.debug(f"Checking password for user {self.email}")
         return check_password_hash(self.password_hash, password)
 
     def get_id(self):
@@ -82,17 +84,19 @@ class User(db.Model, UserMixin):
     @property
     def is_authenticated(self):
         """Return True if the user is authenticated."""
+        logger.debug(f"Checking if user {self.email} is authenticated")
         return True
 
     @property
     def is_active(self):
         """Return True if the user is active."""
-        current_app.logger.debug(f"Accessing is_active for user {self.email}")
+        logger.debug(f"Accessing is_active for user {self.email}")
         return self._is_active
 
     @is_active.setter
     def is_active(self, value):
         """Set the user's active status."""
+        logger.debug(f"Setting is_active to {value} for user {self.email}")
         self._is_active = value
 
     @property
@@ -102,6 +106,7 @@ class User(db.Model, UserMixin):
 
     def serialize(self):
         """Serialize the User object to a dictionary."""
+        logger.debug(f"Serializing user {self.email}")
         return UserSchema().dump(self)
 
     def __repr__(self):
@@ -142,9 +147,11 @@ class Query(db.Model):
         self.settings_selected = settings_selected
         self.user_id = user_id
         self.ip_address = request.remote_addr  # Capture the IP address
+        logger.debug(f"New Query created: {self.serialize()}")
 
     def serialize(self):
         """Serialize the Query object to a dictionary."""
+        logger.debug(f"Serializing query {self.id}")
         return QuerySchema().dump(self)
 
     def __repr__(self):
@@ -170,6 +177,7 @@ class Response(db.Model):
 
     def serialize(self):
         """Serialize the Response object to a dictionary."""
+        logger.debug(f"Serializing response {self.id}")
         return ResponseSchema().dump(self)
 
     def __repr__(self):
@@ -197,9 +205,8 @@ class Activity(db.Model):
 
     def serialize(self):
         """Serialize the Activity object to a dictionary."""
+        logger.debug(f"Serializing activity {self.id}")
         return ActivitySchema().dump(self)
 
     def __repr__(self):
         return f"<Activity {self.id} by User {self.user_id}>"
-
-# Event listeners have been removed as we are now using database triggers

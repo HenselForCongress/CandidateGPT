@@ -15,11 +15,11 @@ CLOUDFLARE_AI_GATEWAY = os.getenv("CLOUDFLARE_AI_GATEWAY")
 
 def generate_response(question, data, config):
     """Generate a response using the OpenAI API based on the question provided and configuration settings."""
-    logger.debug("Starting generate_response function.")
+    logger.debug("🎤 We're starting the generate_response function. Ready for it?")
 
     data_content = "\n\n".join(data.values())
     user_prompt = config['ai']['prompt']
-    logger.debug("Loaded user prompt from config.")
+    logger.debug("Loaded user prompt from config. Shake it off!")
 
     # Construct the system prompt with updated instructions
     system_prompt = (
@@ -56,16 +56,16 @@ def generate_response(question, data, config):
         '  "links": []\n'
         "}"
     )
-    logger.debug("Constructed system prompt.")
+    logger.debug("Constructed system prompt. This is why we can't have nice things...without good logging!")
 
     full_prompt = f"{user_prompt}\n\n{data_content}\n\nQ: {question}\nA:"
-    logger.debug("Constructed full prompt for the assistant.")
+    logger.debug("Constructed full prompt for the assistant. Ready to begin again.")
 
     headers = {
         "Authorization": f"Bearer {OPENAI_API_KEY}",
         "Content-Type": "application/json"
     }
-    logger.debug("Set up headers for the API request.")
+    logger.debug("Set up headers for the API request. Stay, stay, stay...on this page!")
 
     json_data = {
         "model": config['ai']['model'],
@@ -77,7 +77,7 @@ def generate_response(question, data, config):
 
     # Dynamically add settings from config.yml to json_data
     json_data.update(config['ai']['settings'])
-    logger.debug("Prepared JSON payload for the API request.")
+    logger.debug("Prepared JSON payload for the API request. It's time to go!")
 
     result = {
         'answer': '',
@@ -86,31 +86,28 @@ def generate_response(question, data, config):
     }
 
     try:
-        logger.info("Sending request to OpenAI API.")
+        logger.info("Sending request to OpenAI API. Are you ready for it?")
         response = requests.post(
             f"https://gateway.ai.cloudflare.com/v1/{CLOUDFLARE_ACCOUNT_ID}/{CLOUDFLARE_AI_GATEWAY}/openai/chat/completions",
             headers=headers,
             json=json_data
         )
-        logger.debug(f"Received response with status code {response.status_code}.")
+        logger.debug(f"Received response with status code {response.status_code}. Everything has changed!")
 
         if response.status_code == 200:
             response_json = response.json()
-            logger.debug("Parsed response JSON successfully.")
+            logger.debug("Parsed response JSON successfully. Gorgeous!")
 
             answer_content = response_json['choices'][0]['message']['content'].strip()
             logger.debug(f"Assistant's raw response: {answer_content}")
 
             # Function to extract JSON object from the assistant's response
             def extract_json_from_response(text):
-                # Remove code block markers and language tags
                 text = text.strip()
                 if text.startswith('```') and text.endswith('```'):
                     text = text[3:-3].strip()
-                    # Remove language tag if present
                     if text.lower().startswith('json'):
                         text = text[4:].strip()
-                # Use regex to find JSON object
                 json_match = re.search(r'\{.*\}', text, re.DOTALL)
                 if json_match:
                     return json_match.group(0)
@@ -127,24 +124,24 @@ def generate_response(question, data, config):
                     inference = answer_data.get('inference', False)
                     if inference:
                         result['warning'] = "The response uses inference or content not directly mentioned in the source data."
-                        logger.warning("Inference detected in the assistant's response.")
+                        logger.warning("Inference detected in the assistant's response. You need to calm down.")
                     result['links'] = answer_data.get('links', [])
-                    logger.debug("Extracted data from the assistant's response.")
+                    logger.debug("Extracted data from the assistant's response. Clean.")
                 except json.JSONDecodeError as e:
-                    logger.error(f"Failed to parse assistant's response as JSON: {e}")
+                    logger.error(f"Failed to parse assistant's response as JSON: {e} This is why we can't have nice things.")
                     result['answer'] = answer_content
                     result['warning'] = "The assistant's response could not be parsed as JSON."
             else:
-                logger.error("No JSON object found in the assistant's response.")
+                logger.error("No JSON object found in the assistant's response. Bad blood!")
                 result['answer'] = answer_content
                 result['warning'] = "The assistant's response does not contain a JSON object."
         else:
-            logger.error(f"API request failed with status code {response.status_code}.")
+            logger.error(f"API request failed with status code {response.status_code}. I knew you were trouble.")
             result['answer'] = f"Error: {response.status_code} - {response.text}"
 
     except Exception as e:
-        logger.exception("An exception occurred during the API request.")
+        logger.exception("An exception occurred during the API request. Out of the woods?")
         result['answer'] = f"Exception: {str(e)}"
 
-    logger.debug("Finished processing the generate_response function.")
+    logger.debug("Finished processing the generate_response function. Long live.")
     return result
