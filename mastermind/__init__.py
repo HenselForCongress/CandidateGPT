@@ -7,6 +7,7 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 import sentry_sdk
 from flask_wtf.csrf import CSRFProtect
+from flask_migrate import Migrate, upgrade
 
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
@@ -89,5 +90,17 @@ def begin_era():
         # We recommend adjusting this value in production.
         profiles_sample_rate=1.0,
     )
+
+    # Run migrations
+    with app.app_context():
+        try:
+            logger.info("Applying database migrations...")
+            upgrade()
+            logger.info("Database migrations applied successfully.")
+        except Exception as e:
+            logger.error(f"Error applying database migrations: {e}")
+            # Depending on your requirements, you might want to exit the application
+            # or handle the error differently
+            raise
 
     return app
