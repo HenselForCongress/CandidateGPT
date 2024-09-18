@@ -21,6 +21,9 @@ RUN poetry install --only main || (poetry lock --no-update && poetry install --o
 # Copy the rest of the code
 COPY . /app/
 
+# Create a logs directory in case nothing is mounted...
+RUN mkdir /logs
+
 # Copy the entrypoint script into the container
 COPY entrypoint.sh /entrypoint.sh
 
