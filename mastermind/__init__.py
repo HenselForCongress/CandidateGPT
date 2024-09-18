@@ -1,6 +1,7 @@
 # mastermind/__init__.py
 import os
 import sys
+import subprocess
 from datetime import timedelta
 from flask import Flask
 from flask_login import LoginManager
