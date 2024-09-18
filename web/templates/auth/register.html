@@ -7,12 +7,10 @@
 <section class="usa-section">
     <h2 class="usa-heading">Register</h2>
     <form method="POST" class="usa-form">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"> <!-- Hidden CSRF token -->
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"> <!-- Hidden CSRF token -->
         {{ form.hidden_tag() }}
         <label for="email" class="usa-label">{{ form.email.label }}</label>
         {{ form.email(class="usa-input") }}
-        <label for="password" class="usa-label">{{ form.password.label }}</label>
-        {{ form.password(class="usa-input") }}
         <button type="submit" class="usa-button">Register</button>
     </form>
 </section>

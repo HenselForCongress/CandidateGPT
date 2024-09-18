@@ -14,6 +14,8 @@ from wtforms.validators import DataRequired, Email
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from datetime import timedelta
+import string
+import secrets
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
 
@@ -220,27 +222,53 @@ def reset_password(token):
     logger.debug(f"Rendering password reset form for user {email}.")
     return render_template('auth/reset_password.html', form=form)
 
+
 @auth_bp.route('/register', methods=['GET', 'POST'])
 def register():
     form = RegistrationForm()
     if form.validate_on_submit():
         try:
             email = form.email.data
+
+            # Check if the user already exists
+            existing_user = User.query.filter_by(email=email).first()
+            if existing_user:
+                logger.warning(f"User with email {email} already exists.")
+                flash('User with this email already exists.', 'danger')
+                return redirect(url_for('auth.register'))
+
             user_type = UserType.query.filter_by(name=UserTypeEnum.VIEWER).first()
-            new_user = User(email=email, user_type=user_type)
+
+            # Generate a random secure password and create a hashed version of it
+            random_password = generate_secure_password()
+            password_hash = generate_password_hash(random_password)
+
+            new_user = User(
+                email=email,
+                password_hash=password_hash,
+                user_type=user_type
+            )
             db.session.add(new_user)
             db.session.commit()
 
-            # Send a password reset email
+            # Generate a password reset token
             token = generate_token(new_user.email, salt='password-reset')
-            send_email(
-                subject='Welcome to CandidateGPT - Set Your Password',
-                recipient=new_user.email,
-                template='email/welcome_with_reset.html',
-                token=token
-            )
+
+            # Send the welcome and password reset email
+            try:
+                logger.debug(f"Sending welcome email to {new_user.email}.")
+                send_email(
+                    subject='Welcome to CandidateGPT - Set Your Password',
+                    recipient=new_user.email,
+                    template='email/invitation.html',  # Use your appropriate email template
+                    token=token
+                )
+                logger.info(f"Welcome email sent to {new_user.email}.")
+            except Exception as e:
+                logger.error(f"Error sending welcome email to {new_user.email}: {e}")
+                flash('Registration successful, but the welcome email could not be sent.', 'danger')
+
             flash('Registration successful. Please check your email to set your password.', 'success')
-            logger.info(f"New viewer account {email} registered.")
             return redirect(url_for('auth.login'))
         except Exception as e:
             db.session.rollback()
@@ -298,3 +326,10 @@ def security():
         pass
     return render_template('auth/security.html', user=current_user)
 
+class RegistrationForm(FlaskForm):
+    email = StringField('Email', validators=[DataRequired(), Email()])
+
+def generate_secure_password(length=75):
+    characters = string.ascii_letters + string.digits + string.punctuation
+    secure_password = ''.join(secrets.choice(characters) for i in range(length))
+    return secure_password
