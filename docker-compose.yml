@@ -15,7 +15,7 @@ services:
     volumes:
       - ${MNT_PATH}:/var/lib/postgresql/data
     networks:
-      - candidate_gpt
+      - datasystems
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -d ${POSTGRES_DATABASE} -U ${POSTGRES_USER}"]
       interval: 1s
@@ -38,12 +38,12 @@ services:
     ports:
       - ${APP_PORT}
     networks:
-      - candidate_gpt
+      - datasystems
       - cloud-net
 
 networks:
-  candidate_gpt:
+  datasystems:
+    external: true
   cloud-net:
-    external:
-      true
+    external: true
 
