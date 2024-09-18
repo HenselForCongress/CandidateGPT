@@ -4,10 +4,8 @@ from flask import request
 from werkzeug.security import generate_password_hash, check_password_hash
 import uuid
 import enum
-from sqlalchemy import (func, create_engine, Column, String, Integer, Sequence,
-                        DateTime, Boolean, Text, ForeignKey, Index, event)
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship, sessionmaker, declared_attr
+from sqlalchemy import (func, Column, String, Integer, DateTime, Boolean, Text, ForeignKey, Index)
+from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import UUID
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
@@ -34,8 +32,8 @@ class UserType(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True, comment="Auto incrementing primary key")
     name = db.Column(db.Enum(UserTypeEnum), unique=True, nullable=False, comment="Name of the user type (e.g., Admin, User, Viewer)")
     description = db.Column(db.String(255), nullable=True, comment="Description of the user type")
-    created_at = db.Column(db.DateTime, default=func.now(), comment="Record creation date")
-    updated_at = db.Column(db.DateTime, default=func.now(), onupdate=func.now(), comment="Record last update date")
+    created_at = db.Column(db.DateTime, server_default=func.now(), nullable=False, comment="Record creation date")
+    updated_at = db.Column(db.DateTime, server_default=func.now(), nullable=False, comment="Record last update date")
 
     def __repr__(self):
         return f"<UserType {self.name}>"
@@ -60,8 +58,8 @@ class User(db.Model):
     is_active = db.Column(db.Boolean, default=True, comment="Is the user active?")
     user_type_id = db.Column(db.Integer, db.ForeignKey('meta.user_types.id', ondelete='CASCADE'), nullable=False, comment="Foreign key to the user type")
     last_login = db.Column(db.DateTime, nullable=True, comment="Last login time")
-    created_at = db.Column(db.DateTime, default=func.now(), comment="Record creation date")
-    updated_at = db.Column(db.DateTime, default=func.now(), onupdate=func.now(), comment="Record last update date")
+    created_at = db.Column(db.DateTime, server_default=func.now(), nullable=False, comment="Record creation date")
+    updated_at = db.Column(db.DateTime, server_default=func.now(), nullable=False, comment="Record last update date")
     queries = db.relationship('Query', backref='user', lazy=True, cascade="all, delete-orphan")
     user_type = db.relationship('UserType', backref='users')
 
@@ -106,8 +104,8 @@ class Query(db.Model):
     timestamp = db.Column(db.DateTime, default=datetime.utcnow, comment="Time when query was made")
     ip_address = db.Column(db.String(45), nullable=True, comment="IP address from which the query was made")
     user_id = db.Column(UUID(as_uuid=True), db.ForeignKey('entities.users.user_id', ondelete='CASCADE'), nullable=False, comment="ID of the user who made the query")
-    created_at = db.Column(db.DateTime, default=func.now(), comment="Record creation date")
-    updated_at = db.Column(db.DateTime, default=func.now(), onupdate=func.now(), comment="Record last update date")
+    created_at = db.Column(db.DateTime, server_default=func.now(), nullable=False, comment="Record creation date")
+    updated_at = db.Column(db.DateTime, server_default=func.now(), nullable=False, comment="Record last update date")
 
     def __init__(self, query_text, response_text, settings_selected, user_id):
         self.query_text = query_text
@@ -138,8 +136,8 @@ class Response(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True, comment="Auto incrementing primary key")
     response_text = db.Column(db.Text, nullable=False, comment="Response text")
     query_id = db.Column(db.Integer, db.ForeignKey('logs.queries.id', ondelete='CASCADE'), nullable=False, comment="Associated query ID")
-    created_at = db.Column(db.DateTime, default=func.now(), comment="Record creation date")
-    updated_at = db.Column(db.DateTime, default=func.now(), onupdate=func.now(), comment="Record last update date")
+    created_at = db.Column(db.DateTime, server_default=func.now(), nullable=False, comment="Record creation date")
+    updated_at = db.Column(db.DateTime, server_default=func.now(), nullable=False, comment="Record last update date")
 
     def serialize(self):
         """Serialize the Response object to a dictionary."""
@@ -165,8 +163,8 @@ class Activity(db.Model):
     activity_type = db.Column(db.String(50), nullable=False, comment="Type of activity (e.g., login, update)")
     description = db.Column(db.Text, nullable=False, comment="Detailed description of the activity")
     user_id = db.Column(UUID(as_uuid=True), db.ForeignKey('entities.users.user_id', ondelete='CASCADE'), nullable=False, comment="ID of the user who performed the activity")
-    created_at = db.Column(db.DateTime, default=func.now(), comment="Record creation date")
-    updated_at = db.Column(db.DateTime, default=func.now(), onupdate=func.now(), comment="Record last update date")
+    created_at = db.Column(db.DateTime, server_default=func.now(), nullable=False, comment="Record creation date")
+    updated_at = db.Column(db.DateTime, server_default=func.now(), nullable=False, comment="Record last update date")
 
     def serialize(self):
         """Serialize the Activity object to a dictionary."""
@@ -175,41 +173,4 @@ class Activity(db.Model):
     def __repr__(self):
         return f"<Activity {self.id} by User {self.user_id}>"
 
-# Implementing audit trails using event listeners
-@event.listens_for(User, 'after_insert')
-def receive_after_insert(mapper, connection, target):
-    """Log audit trail for user insertion."""
-    connection.execute(
-        Activity.__table__.insert(),
-        {
-            'activity_type': 'insert',
-            'description': f"User {target.email} created",
-            'user_id': target.user_id,
-            'created_at': func.now(),
-            'updated_at': func.now(),
-        }
-    )
-
-@event.listens_for(User, 'after_update')
-def receive_after_update(mapper, connection, target):
-    """Log audit trail for user update."""
-    connection.execute(
-        Activity.__table__.insert(),
-        {
-            'activity_type': 'update',
-            'description': f"User {target.email} updated",
-            'user_id': target.user_id,
-            'created_at': func.now(),
-            'updated_at': func.now(),
-        }
-    )
-
-@event.listens_for(User, 'after_delete')
-def receive_after_delete(mapper, connection, target):
-    """Log audit trail for user deletions."""
-    connection.execute(
-        Activity.__table__.insert(),
-        activity_type='delete',
-        description=f"User {target.email} deleted",
-        user_id=target.user_id
-    )
+# Event listeners have been removed as we are now using database triggers
