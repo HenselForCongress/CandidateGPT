@@ -1,8 +1,9 @@
 # Use an official Python runtime as a parent image
 FROM python:3.12
 
-# Install Poetry
-RUN pip install --upgrade pip \
+# Install PostgreSQL client and Poetry
+RUN apt-get update && apt-get install -y postgresql-client \
+    && pip install --upgrade pip \
     && pip install poetry \
     && poetry config virtualenvs.create false
 
