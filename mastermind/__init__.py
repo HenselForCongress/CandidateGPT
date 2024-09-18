@@ -46,7 +46,7 @@ def begin_era():
     app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'default-secret-key')
 
     # Addl Security stuff
-    app.config['SESSION_COOKIE_SECURE'] = True  # Use HTTPS
+    app.config['SESSION_COOKIE_SECURE'] = False # Temp disable
     app.config['SESSION_COOKIE_HTTPONLY'] = True
     app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
     app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=30)
