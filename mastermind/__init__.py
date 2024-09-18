@@ -91,16 +91,19 @@ def begin_era():
         profiles_sample_rate=1.0,
     )
 
-    # Run migrations
-    with app.app_context():
-        try:
-            logger.info("Applying database migrations...")
-            upgrade()
-            logger.info("Database migrations applied successfully.")
-        except Exception as e:
-            logger.error(f"Error applying database migrations: {e}")
-            # Depending on your requirements, you might want to exit the application
-            # or handle the error differently
-            raise
+    # Conditionally run migrations only if not under Alembic's context
+    if 'alembic' not in sys.modules:
+        with app.app_context():
+            try:
+                logger.info("Applying database migrations...")
+                upgrade()
+                logger.info("Database migrations applied successfully.")
+            except Exception as e:
+                logger.error(f"Error applying database migrations: {e}")
+                # Depending on your requirements, you might want to exit the application
+                # or handle the error differently
+                raise
+
+    return app
 
     return app
