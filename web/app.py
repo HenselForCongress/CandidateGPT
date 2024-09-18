@@ -52,3 +52,14 @@ def page_not_found(e):
 @web_bp.route('/debug')
 def debug():
     return {key: value for key, value in request.headers.items()}
+
+# Test Route
+@web_bp.route('/test')
+def test():
+    """Render the about page."""
+    logger.info("☕ Look what you made me do, the user is curious about us.")
+    try:
+        return render_template('test.html')
+    except Exception as e:
+        logger.error("💔 Oops, something went wrong while rendering the about page: %s", e)
+        return "An error occurred", 500

@@ -1,4 +1,16 @@
 <!-- web/templates/header.html -->
+<script>
+  // Attach the feedback form to the custom button
+  const feedback = Sentry.feedbackIntegration({
+    autoInject: false, // Prevents the default widget injection
+  });
+
+  // Attach the Sentry feedback form to your custom button
+  feedback.attachTo(document.querySelector("#report-bug-button"), {
+    formTitle: "Report a Bug",
+    triggerLabel: "Send Feedback",
+  });
+</script>
 <header class="usa-header usa-header--basic usa-header-basic" role="banner">
     <div class="usa-navbar">
         <div class="usa-logo" id="logo">
@@ -16,6 +28,7 @@
                 {% endif %}
 
                 <li><a href="https://github.com/HenselForCongress/CandidateGPT" target=_blank class="usa-nav__link">GitHub</a></li> |
+                <li><button id="report-bug-button">Report a Bug</button></li>
                 {% if current_user.is_authenticated %}
                     <li><a href="{{ url_for('auth.profile') }}" class="usa-nav__link">Profile</a></li>
                     {% if current_user.user_type.name.value == 'ADMIN' %}

@@ -1,0 +1,23 @@
+<!-- web/templates/about.html -->
+{% extends 'base.html' %}
+
+{% block title %}About - CandidateGPT{% endblock %}
+
+{% block content %}
+<section class="usa-section">
+    <h2 class="usa-heading">Test Page</h2>
+
+
+<!-- A button to trigger a test error -->
+    <button id="test-error" class="usa-button">Trigger Test Error</button>
+    <script>
+      const button = document.getElementById('test-error');
+      button.addEventListener('click', () => {
+        throw new Error('This is a test error');
+      });
+    </script>
+
+    <button type="submit" class="usa-button">Debug Page</button>
+
+</section>
+{% endblock %}

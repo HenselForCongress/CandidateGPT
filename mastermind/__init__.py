@@ -6,6 +6,7 @@ from flask_login import LoginManager
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 import sentry_sdk
+from sentry_sdk.integrations.flask import FlaskIntegration
 from flask_wtf.csrf import CSRFProtect
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy_utils import database_exists, create_database
@@ -148,6 +149,7 @@ def begin_era():
         sentry_sdk.init(
             dsn=os.getenv('SENRTY_DSN'),
             traces_sample_rate=1.0,
+            integrations=[FlaskIntegration()],
             sample_rate=0.25,
             profiles_sample_rate=1.0,
         )

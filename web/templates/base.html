@@ -18,6 +18,44 @@
 
       gtag('config', 'G-NP0XBDML85');
     </script>
+
+
+    <!-- Sentry User Feedback -->
+    <script src="https://browser.sentry-cdn.com/7.x.x/bundle.min.js" integrity="sha384-xxxx" crossorigin="anonymous"></script>
+    <script>
+      Sentry.init({
+        dsn: "https://ab62b1e3dac2934b852eca63b81816a9@o4504357615960064.ingest.us.sentry.io/4507971559948288",
+
+        // Enable User Feedback and Crash-Report Modal
+        integrations: [
+          Sentry.feedbackIntegration({
+            colorScheme: "system",
+            enableScreenshot: true, // Allows users to send screenshots
+          }),
+          Sentry.replayIntegration({
+            replaysSessionSampleRate: 0.1, // Adjust sample rate for session replay
+            replaysOnErrorSampleRate: 1.0, // Capture replays when an error occurs
+            maskAllText: true, // Mask sensitive information in session replays
+            blockAllMedia: true, // Block media files in session replays
+          }),
+        ],
+
+        beforeSend(event) {
+          // Trigger the Crash-Report Modal on exceptions
+          if (event.exception && event.event_id) {
+            Sentry.showReportDialog({ eventId: event.event_id });
+          }
+          return event;
+        }
+      });
+    </script>
+    <!-- End Sentry User Feedback -->
+
+    <script
+      src="https://js.sentry-cdn.com/423dd3ea3ca16d02c558c1db9aceea1f.min.js"
+      crossorigin="anonymous"
+    ></script>
+
 </head>
 
 <body>
