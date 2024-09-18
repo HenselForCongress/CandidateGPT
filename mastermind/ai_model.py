@@ -4,13 +4,13 @@ import requests
 import yaml
 import json
 import re
-from dotenv import load_dotenv
+#from dotenv import load_dotenv
 from mastermind.utils import logger
 from mastermind.models import Query, db, Response
 from flask_login import current_user  # Import current_user directly
 
 # Load environment variables
-load_dotenv()
+# load_dotenv()
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 CLOUDFLARE_ACCOUNT_ID = os.getenv("CLOUDFLARE_ACCOUNT_ID")
 CLOUDFLARE_AI_GATEWAY = os.getenv("CLOUDFLARE_AI_GATEWAY")

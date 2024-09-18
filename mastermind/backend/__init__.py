@@ -1,12 +1,12 @@
 # mastermind/backend/__init__.py
 from flask import Blueprint, request, jsonify
 import yaml
-from dotenv import load_dotenv
+#from dotenv import load_dotenv
 from mastermind.data_manager.load import load_data
 from mastermind.ai_model import generate_response
 from mastermind import logger
 
-load_dotenv()
+# load_dotenv()
 
 # Initialize Blueprint
 api_bp = Blueprint('api_bp', __name__)
