@@ -39,8 +39,4 @@ def page_not_found(e):
 # Debug Route
 @web_bp.route('/debug')
 def debug():
-    return {
-        "scheme": request.scheme,
-        "x_forwarded_proto": request.headers.get('X-Forwarded-Proto'),
-        "x_forwarded_host": request.headers.get('X-Forwarded-Host'),
-    }
+    return {key: value for key, value in request.headers.items()}
