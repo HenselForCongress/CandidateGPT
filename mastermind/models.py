@@ -59,7 +59,7 @@ class User(db.Model, UserMixin):
     user_id = db.Column(UUID(as_uuid=True), primary_key=True, default=generate_uuid, comment="Unique user ID")
     email = db.Column(db.String(255), unique=True, nullable=False, comment="User's email address", index=True)
     password_hash = db.Column(db.Text, nullable=False, comment="Hashed password")
-    _is_active = db.Column('is_active', db.Boolean, default=True, nullable=False, comment="Is the user active?")
+    is_active = db.Column(db.Boolean, default=True, nullable=False, comment="Is the user active?")
     user_type_id = db.Column(db.Integer, db.ForeignKey('meta.user_types.id', ondelete='CASCADE'), nullable=False, comment="Foreign key to the user type")
     last_login = db.Column(db.DateTime, nullable=True, comment="Last login time")
     created_at = db.Column(db.DateTime, server_default=func.now(), nullable=False, comment="Record creation date")
@@ -86,18 +86,6 @@ class User(db.Model, UserMixin):
         """Return True if the user is authenticated."""
         logger.debug(f"Checking if user {self.email} is authenticated")
         return True
-
-    @property
-    def is_active(self):
-        """Return True if the user is active."""
-        logger.debug(f"Accessing is_active for user {self.email}")
-        return self._is_active
-
-    @is_active.setter
-    def is_active(self, value):
-        """Set the user's active status."""
-        logger.debug(f"Setting is_active to {value} for user {self.email}")
-        self._is_active = value
 
     @property
     def is_anonymous(self):
