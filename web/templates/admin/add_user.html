@@ -7,6 +7,8 @@
 <section class="usa-section">
     <h2 class="usa-heading">Add User</h2>
     <form method="POST" class="usa-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"> <!-- Hidden CSRF token -->
+
         <label for="email" class="usa-label">Email:</label>
         <input type="email" name="email" class="usa-input" required>
 

@@ -5,14 +5,14 @@
 
 {% block content %}
 <section class="usa-section">
-
+    <h2 class="usa-heading">Edit User</h2>
 
     <!-- Display the user's email at the top -->
     <p class="usa-label"><strong>Email:</strong> {{ user.email }}</p>
 
     <!-- Update User Form -->
     <form method="POST" class="usa-form">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"> <!-- Include the CSRF token as a hidden input -->
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"> <!-- Hidden CSRF token -->
 
         <label for="given_name" class="usa-label">Given Name:</label>
         <input type="text" name="given_name" class="usa-input" value="{{ user.given_name }}">
@@ -41,9 +41,7 @@
 
     <!-- Delete User Form -->
     <form method="POST" action="{{ url_for('admin.delete_user', user_id=user.user_id) }}" onsubmit="return confirm('Are you sure you want to delete the user {{ user.email }}? This action cannot be undone.');">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"> <!-- Include the CSRF token as a hidden input -->
-        <button type="submit" class="usa-button usa-button--secondary">Delete User</button>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"> <!-- Hidden CSRF token -->
     </form>
-
 </section>
 {% endblock %}

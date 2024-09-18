@@ -8,6 +8,7 @@
   <h2 class="usa-heading">Profile</h2>
 
   <form method="POST" class="usa-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"> <!-- Hidden CSRF token -->
       <label for="given_name" class="usa-label">Given Name (required):</label>
       <input type="text" name="given_name" class="usa-input" value="{{ user.given_name }}" required>
 
