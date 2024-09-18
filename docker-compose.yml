@@ -25,6 +25,7 @@ services:
       - ${POSTGRES_PORT}:5432
 
 
+
   candidategpt:
     container_name: candidategpt
     hostname: candidategpt
@@ -32,6 +33,7 @@ services:
     restart: always
     volumes:
       - ${LOG_PATH}:/logs
+      - ./entrypoint.sh:/entrypoint.sh
     env_file: stack.env
     depends_on:
       - db_postgres
@@ -40,6 +42,7 @@ services:
     networks:
       - datasystems
       - cloud-net
+    command: ["/entrypoint.sh", "python3", "-m", "run"]
 
 networks:
   datasystems:

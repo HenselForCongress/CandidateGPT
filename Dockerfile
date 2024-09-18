@@ -21,8 +21,5 @@ RUN poetry install --only main || (poetry lock --no-update && poetry install --o
 # Copy the rest of the code
 COPY . /app/
 
-# Run database migrations
-RUN poetry run alembic upgrade head
-
 # Command to run the application
 CMD ["python3", "-m", "run"]
