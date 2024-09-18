@@ -92,14 +92,24 @@ def begin_era():
         profiles_sample_rate=1.0,
     )
 
-    # Run migrations no matter what
+    # Apply migrations unconditionally
     with app.app_context():
-        try:
-            logger.info("Applying database migrations...")
-            upgrade()
-            logger.info("Database migrations applied successfully.")
-        except Exception as e:
-            logger.error(f"Error applying database migrations: {e}")
-            raise
+        apply_migrations()
 
     return app
+
+def apply_migrations():
+    """Run Alembic migrations using subprocess."""
+    try:
+        logger.info("Applying database migrations using Alembic command...")
+        result = subprocess.run(
+            ["alembic", "upgrade", "head"],
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE
+        )
+        logger.info(result.stdout.decode())
+        logger.info("Database migrations applied successfully.")
+    except subprocess.CalledProcessError as e:
+        logger.error(f"Error applying database migrations: {e.stderr.decode()}")
+        raise
