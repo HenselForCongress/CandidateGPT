@@ -10,6 +10,7 @@ from sqlalchemy.dialects.postgresql import UUID
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from marshmallow import Schema, fields, validate
+from flask_login import UserMixin
 
 # Initialize SQLAlchemy and Migrate
 db = SQLAlchemy()
@@ -55,7 +56,7 @@ class User(db.Model):
     user_id = db.Column(UUID(as_uuid=True), primary_key=True, default=generate_uuid, comment="Unique user ID")
     email = db.Column(db.String(255), unique=True, nullable=False, comment="User's email address", index=True)
     password_hash = db.Column(db.Text, nullable=False, comment="Hashed password")
-    is_active = db.Column(db.Boolean, default=True, comment="Is the user active?")
+    _is_active = db.Column('is_active', db.Boolean, default=True, comment="Is the user active?")
     user_type_id = db.Column(db.Integer, db.ForeignKey('meta.user_types.id', ondelete='CASCADE'), nullable=False, comment="Foreign key to the user type")
     last_login = db.Column(db.DateTime, nullable=True, comment="Last login time")
     created_at = db.Column(db.DateTime, server_default=func.now(), nullable=False, comment="Record creation date")
@@ -70,6 +71,25 @@ class User(db.Model):
     def check_password(self, password):
         """Check if the provided password matches the stored hash."""
         return check_password_hash(self.password_hash, password)
+
+    def get_id(self):
+        """Return the user's unique ID as a string."""
+        return str(self.user_id)
+
+    @property
+    def is_authenticated(self):
+        """Return True if the user is authenticated."""
+        return True
+
+    @property
+    def is_active(self):
+        """Return True if the user is active."""
+        return self.is_active
+
+    @property
+    def is_anonymous(self):
+        """Return False, as this is not an anonymous user."""
+        return False
 
     def serialize(self):
         """Serialize the User object to a dictionary."""
