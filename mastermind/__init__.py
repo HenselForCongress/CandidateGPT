@@ -16,6 +16,7 @@ from web.auth import auth_bp, login_manager, limiter
 from .utils import configure_logger, logger, test_logger
 from .models import db, migrate
 from web.admin import csrf
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 from .backend import api_bp
 from web.app import web_bp
@@ -57,6 +58,9 @@ def begin_era():
 
     configure_logger()
     test_logger()
+
+    # Add ProxyFix middleware
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
     # Initialize database and migration with app
     db.init_app(app)
