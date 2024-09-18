@@ -95,13 +95,26 @@ def begin_era():
     # Conditionally run migrations only if not under Alembic's context
     if 'alembic' not in sys.modules:
         with app.app_context():
-            try:
-                logger.info("Applying database migrations...")
-                upgrade()
-                logger.info("Database migrations applied successfully.")
-            except Exception as e:
-                logger.error(f"Error applying database migrations: {e}")
-                # `raise` will propagate the exception up. Ensure this behavior is what you want.
-                raise
+            # Check if alembic_version table exists
+            inspector = inspect(db.engine)
+            tables = inspector.get_table_names()
+
+            if 'alembic_version' not in tables:
+                try:
+                    logger.info("Applying initial database migrations...")
+                    upgrade()
+                    logger.info("Database migrations applied successfully.")
+                except Exception as e:
+                    logger.error(f"Error applying database migrations: {e}")
+                    # `raise` will propagate the exception up. Ensure this behavior is what you want.
+                    raise
+            else:
+                logger.info("Alembic version table found, applying any pending migrations...")
+                try:
+                    upgrade()
+                    logger.info("Database upgraded to the latest version successfully.")
+                except Exception as e:
+                    logger.error(f"Error upgrading the database: {e}")
+                    raise
 
     return app
