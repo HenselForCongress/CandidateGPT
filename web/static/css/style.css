@@ -27,12 +27,44 @@ body {
     color: #000;
 }
 
+.content-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    line-height: 1.6;
+}
+
 .usa-layout-docs__main {
-    padding: 60px 20px 20px;
+    padding: 40px 20px 20px;
     max-width: 1200px;
     margin: 0 auto;
     background-color: #fff;
     box-shadow: var(--box-shadow);
+}
+
+/*==========================
+    Section and Headings
+==========================*/
+.usa-section {
+    padding: 20px 0;
+}
+
+.usa-section__heading {
+    margin-top: 0;
+    font-size: 1.75em;
+    color: var(--primary-color);
+}
+
+.usa-section__subheading {
+    margin-bottom: 10px;
+    font-size: 1.25em;
+    color: var(--primary-color);
+}
+
+.usa-section__list {
+    padding-left: 20px;
+    margin: 10px 0;
+    list-style-type: disc;
 }
 
 /*==========================
@@ -93,7 +125,6 @@ body {
     flex: 2;
     margin-right: 20px;
     min-width: 50%;
-
 }
 
 #questionInput {
@@ -272,7 +303,7 @@ button:hover {
 ==========================*/
 @media (max-width: 768px) {
     .usa-layout-docs__main {
-        padding: 40px 20px 20px;  /* Reduced padding for smaller screens */
+        padding: 20px 20px 20px;  /* Reduced padding for smaller screens */
     }
 
     .form-container {
@@ -312,7 +343,7 @@ button:hover {
 .content-container .usa-heading,
 #questionForm,
 #response {
-    margin-bottom: 30px;
+    margin-bottom: 20px;
 }
 
 /* Adjust the form to fit the container */
@@ -332,9 +363,18 @@ button:hover {
     margin-top: 10px;
 }
 
+/* Buttons Container */
+.button-container {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.button-container .usa-button {
+    margin: 5px;
+}
 
 
-
+/* Swift Image */
 .swift-image {
     width: 100%;
     max-width: 400px;

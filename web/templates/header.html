@@ -9,8 +9,12 @@
         <nav role="navigation" aria-label="Primary navigation">
             <ul class="usa-nav__primary usa-accordion">
                 <li><a href="/" class="usa-nav__link">Home</a></li>
-                <li><a href="{{ url_for('web_bp.about') }}" class="usa-nav__link">About</a></li>
-                <li><a href="https://github.com/HenselForCongress/CandidateGPT/issues/new/choose" target=_blank class="usa-nav__link">Report a 🐛</a></li>
+                {% if current_user.is_authenticated %}
+                    <!-- Redirect authenticated users to the chat page -->
+                    <li><a href="{{ url_for('web_bp.chat') }}" class="usa-nav__link">Chat</a></li>
+                    <li><a href="{{ url_for('web_bp.about') }}" class="usa-nav__link">About</a></li>
+                {% endif %}
+
                 <li><a href="https://github.com/HenselForCongress/CandidateGPT" target=_blank class="usa-nav__link">GitHub</a></li> |
                 {% if current_user.is_authenticated %}
                     <li><a href="{{ url_for('auth.profile') }}" class="usa-nav__link">Profile</a></li>

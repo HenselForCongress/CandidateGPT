@@ -6,21 +6,27 @@
 <div class="content-container">
     {% if current_user.is_authenticated %}
         <!-- Redirect authenticated users to the chat page -->
-        <script>window.location.href = '{{ url_for('chat') }}';</script>
+
     {% else %}
         <!-- Generic AI Power Section for non-logged-in users -->
-        <section class="usa-section">
-            <h3 class="section-title">The Power of AI in Today's World</h3>
+        <section class="usa-section usa-section--primary">
+            <h2 class="usa-section__heading">The Power of AI in Today's World</h2>
             <p>Artificial Intelligence (AI) is revolutionizing the world, transforming industries from healthcare to finance, and now, even politics. At Hensel for Congress, we believe in embracing innovation to create a more informed and engaged electorate.</p>
             <p>By leveraging AI, we can provide real-time information, enhance transparency, and empower voters with the knowledge they need to make informed decisions. Our AI tool, CandidateGPT, is designed to ensure that you have access to accurate and timely information about your elected officials and their stances on critical issues.</p>
-            <p><strong>Our Stance on AI:</strong></p>
-            <ul>
+            <h3 class="usa-section__subheading">Our Stance on AI:</h3>
+            <ul class="usa-section__list">
                 <li><strong>Transparency:</strong> We use AI to bring greater transparency to political processes, making it easier for voters to understand where their representatives stand on key issues.</li>
                 <li><strong>Accessibility:</strong> AI makes information more accessible, breaking down complex topics into easily understandable insights.</li>
                 <li><strong>Innovation:</strong> We are committed to using innovative technologies to improve governance and enhance democratic engagement.</li>
             </ul>
             <p>To learn more, please contact team@henselforcongress.com.</p>
         </section>
+
+        <!-- Buttons for Create Account and Login -->
+        <div class="button-container">
+            <a href="{{ url_for('auth.register') }}" class="usa-button">Create Account</a>
+            <a href="{{ url_for('auth.login') }}" class="usa-button usa-button--secondary">Login</a>
+        </div>
     {% endif %}
 </div>
 {% endblock %}
