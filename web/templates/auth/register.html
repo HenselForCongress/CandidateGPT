@@ -1,20 +1,18 @@
-<!-- web/templates/auth/login.html -->
+<!-- web/templates/auth/register.html -->
 {% extends 'base.html' %}
 
-{% block title %}Login{% endblock %}
+{% block title %}Register{% endblock %}
 
 {% block content %}
 <section class="usa-section">
-    <h2 class="usa-heading">Login</h2>
+    <h2 class="usa-heading">Register</h2>
     <form method="POST" class="usa-form">
         {{ form.hidden_tag() }}
         <label for="email" class="usa-label">{{ form.email.label }}</label>
         {{ form.email(class="usa-input") }}
         <label for="password" class="usa-label">{{ form.password.label }}</label>
         {{ form.password(class="usa-input") }}
-        <button type="submit" class="usa-button">Login</button><br><br>
-        <a href="{{ url_for('auth.password_reset_request') }}" class="usa-link">Forgot your password?</a><br>
-        <a href="{{ url_for('auth.register') }}" class="usa-link">Create Account</a>
+        <button type="submit" class="usa-button">Register</button>
     </form>
 </section>
 {% endblock %}

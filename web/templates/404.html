@@ -1,0 +1,14 @@
+<!-- web/templates/404.html -->
+{% extends 'base.html' %}
+
+{% block title %}404 - Page Not Found{% endblock %}
+
+{% block content %}
+<section class="usa-section">
+    <h2 class="usa-heading">404 - Oops! We Knew You Were Trouble</h2>
+    <p class="usa-paragraph">Sorry, the page you are looking for seems to have "Vanished like a ghost".</p>
+    <p class="usa-paragraph">But don't worry, you can "Shake it off" and head back to our <a href="{{ url_for('web_bp.index') }}">home page</a>.</p>
+    <p class="usa-paragraph">Or maybe you're "Wonderstruck" by our <a href="{{ url_for('web_bp.about') }}">about page</a>?</p>
+    <img src="https://content.henselforcongress.com/goodies/travis-being-travis.jpg" alt="Taylor Swift looking at Travis after being awesome on stage" class="swift-image">
+</section>
+{% endblock %}

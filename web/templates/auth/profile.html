@@ -1,0 +1,30 @@
+<!-- web/templates/auth/profile.html -->
+{% extends 'base.html' %}
+
+{% block title %}Register{% endblock %}
+
+{% block content %}
+<section class="usa-section">
+  <h2 class="usa-heading">Profile</h2>
+
+  <form method="POST" class="usa-form">
+      <label for="given_name" class="usa-label">Given Name (required):</label>
+      <input type="text" name="given_name" class="usa-input" value="{{ user.given_name }}" required>
+
+      <label for="family_name" class="usa-label">Family Name (if applicable):</label>
+      <input type="text" name="family_name" class="usa-input" value="{{ user.family_name }}">
+
+      <label for="preferred_name" class="usa-label">Preferred Name:</label>
+      <input type="text" name="preferred_name" class="usa-input" value="{{ user.preferred_name }}">
+
+      <label for="organization" class="usa-label">Organization:</label>
+      <input type="text" name="organization" class="usa-input" value="{{ user.organization.name if user.organization else '' }}">
+
+      <label for="notes" class="usa-label">Notes (How do you plan to use the tool?):</label>
+      <textarea name="notes" class="usa-textarea">{{ user.notes }}</textarea>
+
+      <button type="submit" class="usa-button">Update Profile</button>
+  </form>
+</section>
+
+{% endblock %}

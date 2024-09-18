@@ -6,6 +6,10 @@ from functools import wraps
 from mastermind.models import db, User, UserType, UserTypeEnum
 from mastermind.utils import generate_token, send_email, logger
 
+from flask_wtf.csrf import CSRFProtect
+
+csrf = CSRFProtect()
+
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 
 def admin_required(f):
@@ -14,11 +18,20 @@ def admin_required(f):
         if not current_user.is_authenticated:
             logger.warning("Unauthorized access attempt. User not authenticated.")
             abort(403)
-        if current_user.user_type.name != UserTypeEnum.ADMIN.value:
-            logger.error(f"Access denied for user {current_user.email}. Not an admin.")
+
+        logger.debug(f"Current user ID: {current_user.user_id}")
+        logger.debug(f"Current user type: {current_user.user_type}")
+        logger.debug(f"Current user type name: {current_user.user_type.name}")
+        logger.debug(f"Expected user type: {UserTypeEnum.ADMIN.value}")
+
+        # Check using the enum's value for string comparison
+        if current_user.user_type.name.value != UserTypeEnum.ADMIN.value:
+            logger.error(f"Access denied for user {current_user.email}. User type: {current_user.user_type.name}")
             abort(403)
+
         logger.info(f"Admin access granted to user {current_user.email}.")
         return f(*args, **kwargs)
+
     return decorated_function
 
 
@@ -58,18 +71,17 @@ def add_user():
             return redirect(url_for('admin.add_user'))
 
         try:
-            temp_password = 'TemporaryPassword123'  # Consider generating a secure random password
             new_user = User(email=email, user_type=user_type)
-            new_user.set_password(temp_password)
             db.session.add(new_user)
             db.session.commit()
 
+            # Generate a password reset token and send a reset email
+            token = generate_token(new_user.email, salt='password-reset')
             send_email(
-                subject='Welcome to CandidateGPT',
+                subject='Welcome to CandidateGPT - Set Your Password',
                 recipient=new_user.email,
-                template='email/welcome.html',
-                user=new_user,
-                temp_password=temp_password
+                template='email/welcome_with_reset.html',
+                token=token
             )
             logger.info(f"New user {new_user.email} added by admin {current_user.email}")
             flash('User added successfully.', 'success')
@@ -103,10 +115,48 @@ def delete_user(user_id):
         return redirect(url_for('admin.list_users'))
 
 
-def admin_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if not current_user.is_authenticated or current_user.user_type.name != UserTypeEnum.ADMIN.value:
-            abort(403)
-        return f(*args, **kwargs)
-    return decorated_function
+
+
+
+@admin_bp.route('/dashboard')
+@login_required
+@admin_required
+def admin_dashboard():
+    """Render the admin dashboard with summary information."""
+    try:
+        total_users = User.query.count()
+        active_users = User.query.filter_by(is_active=True).count()
+        inactive_users = User.query.filter_by(is_active=False).count()
+        logger.info("Admin dashboard data retrieved successfully.")
+        return render_template('admin/dashboard.html', total_users=total_users, active_users=active_users, inactive_users=inactive_users)
+    except Exception as e:
+        logger.error(f"Error retrieving dashboard data: {e}")
+        flash('An error occurred while loading the dashboard.', 'danger')
+        return redirect(url_for('web_bp.index'))
+
+@admin_bp.route('/users/<user_id>/edit', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def edit_user(user_id):
+    user = User.query.get_or_404(user_id)
+    if request.method == 'POST':
+        try:
+            user_type_name = request.form['user_type']
+            user_type = UserType.query.filter_by(name=user_type_name).first()
+            if not user_type:
+                flash('Invalid user type selected.', 'danger')
+                return redirect(url_for('admin.edit_user', user_id=user.user_id))
+
+            user.user_type = user_type
+            user.is_active = 'is_active' in request.form  # checkbox input for is_active
+            db.session.commit()
+            flash('User updated successfully.', 'success')
+            logger.info(f"User {user.email} updated successfully.")
+            return redirect(url_for('admin.list_users'))
+        except Exception as e:
+            db.session.rollback()
+            logger.error(f"Error updating user {user.email}: {e}")
+            flash('An error occurred while updating the user.', 'danger')
+
+    user_types = UserType.query.all()
+    return render_template('admin/edit_user.html', user=user, user_types=user_types)

@@ -61,7 +61,6 @@ class ResetPasswordForm(FlaskForm):
 @auth_bp.route('/login', methods=['GET', 'POST'])
 @limiter.limit("5 per minute")
 def login():
-    # Check if any users exist
     user_count = User.query.count()
     logger.debug(f"Number of users in the system: {user_count}")
     if user_count == 0:
@@ -79,8 +78,9 @@ def login():
         password = form.password.data
         logger.debug(f"Login attempt with email: {email}")
 
-        user = User.query.filter_by(email=email, _is_active=True).first()
-        if user and user.check_password(password):
+        # Check for is_active directly
+        user = User.query.filter_by(email=email).first()
+        if user and user.is_active and user.check_password(password):
             login_user(user)
             logger.info(f"User {user.email} logged in from IP {request.remote_addr}.")
             flash('Logged in successfully!', 'success')
@@ -88,6 +88,7 @@ def login():
         else:
             logger.warning(f"Failed login attempt for email: {email} from IP {request.remote_addr}")
             flash('Invalid email or password.', 'danger')
+
     return render_template('auth/login.html', form=form)
 
 # Setup Admin route
@@ -203,3 +204,79 @@ def reset_password(token):
         return redirect(url_for('auth.login'))
 
     return render_template('auth/reset_password.html', form=form)
+
+
+@auth_bp.route('/register', methods=['GET', 'POST'])
+def register():
+    form = RegistrationForm()
+    if form.validate_on_submit():
+        try:
+            email = form.email.data
+            user_type = UserType.query.filter_by(name=UserTypeEnum.VIEWER).first()
+            new_user = User(email=email, user_type=user_type)
+            db.session.add(new_user)
+            db.session.commit()
+
+            # Send a password reset email
+            token = generate_token(new_user.email, salt='password-reset')
+            send_email(
+                subject='Welcome to CandidateGPT - Set Your Password',
+                recipient=new_user.email,
+                template='email/welcome_with_reset.html',
+                token=token
+            )
+            flash('Registration successful. Please check your email to set your password.', 'success')
+            logger.info(f"New viewer account {email} registered.")
+            return redirect(url_for('auth.login'))
+        except Exception as e:
+            db.session.rollback()
+            logger.error(f"Error during registration for {email}: {e}")
+            flash('An error occurred during registration.', 'danger')
+    return render_template('auth/register.html', form=form)
+
+
+@auth_bp.route('/profile', methods=['GET', 'POST'])
+@login_required
+def profile():
+    if request.method == 'POST':
+        given_name = request.form.get('given_name')
+        family_name = request.form.get('family_name')
+        preferred_name = request.form.get('preferred_name')
+        organization_name = request.form.get('organization')
+        notes = request.form.get('notes')
+
+        # Update user profile
+        current_user.given_name = given_name
+        current_user.family_name = family_name
+        current_user.preferred_name = preferred_name
+        current_user.notes = notes
+
+        # Handle organization creation if needed
+        if organization_name:
+            organization = Organization.query.filter_by(name=organization_name).first()
+            if not organization:
+                # Create a new organization
+                organization = Organization(name=organization_name)
+                db.session.add(organization)
+                db.session.flush()  # Flush to get the new organization ID
+
+            current_user.organization_id = organization.id
+
+        try:
+            db.session.commit()
+            flash('Profile updated successfully.', 'success')
+        except Exception as e:
+            db.session.rollback()
+            logger.error(f"Error updating profile: {e}")
+            flash('An error occurred while updating your profile.', 'danger')
+
+    return render_template('auth/profile.html', user=current_user)
+
+@auth_bp.route('/profile/security', methods=['GET', 'POST'])
+@login_required
+def security():
+    if request.method == 'POST':
+        # Placeholder for future security settings (e.g., 2FA)
+        pass
+    return render_template('auth/security.html', user=current_user)
+

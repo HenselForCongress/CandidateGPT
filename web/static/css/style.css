@@ -332,3 +332,12 @@ button:hover {
     margin-top: 10px;
 }
 
+
+
+
+.swift-image {
+    width: 100%;
+    max-width: 400px;
+    display: block;
+    margin: 20px auto;
+}

@@ -1,0 +1,21 @@
+<!-- web/templates/admin/edit_user.html -->
+{% extends 'base.html' %}
+
+{% block title %}Edit User{% endblock %}
+
+{% block content %}
+<section class="usa-section">
+    <h2 class="usa-heading">Edit User</h2>
+    <form method="POST" class="usa-form">
+        <label for="user_type" class="usa-label">User Type</label>
+        <select name="user_type" class="usa-select">
+            {% for user_type in user_types %}
+                <option value="{{ user_type.name }}" {% if user.user_type.name == user_type.name %}selected{% endif %}>{{ user_type.name }}</option>
+            {% endfor %}
+        </select>
+        <label for="is_active" class="usa-label">Active</label>
+        <input type="checkbox" name="is_active" id="is_active" {% if user.is_active %}checked{% endif %}>
+        <button type="submit" class="usa-button">Update User</button>
+    </form>
+</section>
+{% endblock %}

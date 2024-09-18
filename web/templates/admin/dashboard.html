@@ -1,0 +1,19 @@
+<!-- web/templates/admin/dashboard.html -->
+{% extends 'base.html' %}
+
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+<section class="usa-section">
+    <h2 class="usa-heading">Admin Dashboard</h2>
+    <p>Total Users: {{ total_users }}</p>
+    <p>Active Users: {{ active_users }}</p>
+    <p>Inactive Users: {{ inactive_users }}</p>
+
+    <!-- Add links to manage users -->
+    <ul>
+        <li><a href="{{ url_for('admin.list_users') }}" class="usa-link">Manage Users</a></li>
+        <li><a href="{{ url_for('admin.add_user') }}" class="usa-link">Invite User</a></li>
+    </ul>
+</section>
+{% endblock %}

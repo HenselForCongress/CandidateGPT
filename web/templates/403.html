@@ -1,0 +1,14 @@
+<!-- web/templates/404.html -->
+{% extends 'base.html' %}
+
+{% block title %}403 - Page Not Found{% endblock %}
+
+{% block content %}
+<section class="usa-section">
+    <h2 class="usa-heading">403 - You Belong with Admins</h2>
+    <p class="usa-paragraph">Sorry, but you don't have the "Style" to access this page.</p>
+    <p class="usa-paragraph">You might need to check with your admin if you want to "Change the Story of Us".</p>
+    <p><a href="{{ url_for('web_bp.index') }}">Take me home</a></p>
+    <img src="https://content.henselforcongress.com/goodies/taylor-frustrated.jpg" alt="Taylor Swift looking at Travis after being awesome on stage" class="swift-image">
+</section>
+{% endblock %}

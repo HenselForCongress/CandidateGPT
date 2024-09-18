@@ -9,12 +9,24 @@
     <form method="POST" class="usa-form">
         <label for="email" class="usa-label">Email:</label>
         <input type="email" name="email" class="usa-input" required>
+
         <label for="user_type" class="usa-label">User Type:</label>
         <select name="user_type" class="usa-select">
             {% for type in user_types %}
-                <option value="{{ type.name }}">{{ type.name }}</option>
+                <option value="{{ type.name.value }}">{{ type.name.value }}</option>
             {% endfor %}
         </select>
+
+        <!-- Add descriptions for the user types -->
+        <div class="user-type-descriptions mt-3">
+            <h3 class="usa-heading">User Type Descriptions</h3>
+            <ul class="usa-list">
+                {% for type in user_types %}
+                    <li><strong>{{ type.name.value }}:</strong> {{ type.description }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+
         <button type="submit" class="usa-button">Add User</button>
     </form>
 </section>

@@ -8,9 +8,23 @@
     <title>{% block title %}CandidateGPT{% endblock %}</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/uswds/2.12.1/css/uswds.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-NP0XBDML85"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-NP0XBDML85');
+    </script>
+
+
 </head>
 
 <body>
+
+
     <div class="usa-banner">
         <div class="usa-accordion">
             <header class="usa-banner__header">

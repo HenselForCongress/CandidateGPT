@@ -23,3 +23,15 @@ def about():
     except Exception as e:
         logger.error("💔 Oops, something went wrong while rendering the about page: %s", e)
         return "An error occurred", 500
+
+# Error handler for 404
+@web_bp.app_errorhandler(404)
+def page_not_found(e):
+    logger.warning(f"404 Error: {e}")
+    return render_template('404.html'), 404
+
+# Error handler for 403
+@web_bp.app_errorhandler(403)
+def page_not_found(e):
+    logger.warning(f"403 Error: {e}")
+    return render_template('403.html'), 403

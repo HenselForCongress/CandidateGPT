@@ -6,6 +6,7 @@ import json
 import re
 from dotenv import load_dotenv
 from mastermind.utils import logger
+from mastermind.models import Query, db
 
 # Load environment variables
 load_dotenv()
@@ -84,6 +85,16 @@ def generate_response(question, data, config):
         'warning': '',
         'links': []
     }
+
+    # Log query
+    query_record = Query(
+        query_text=question,
+        response_text='',  # Placeholder
+        settings_selected=json.dumps(config['ai']['settings']),
+        user_id=current_user.user_id
+    )
+    db.session.add(query_record)
+    db.session.commit()
 
     try:
         logger.info("Sending request to OpenAI API. Are you ready for it?")
