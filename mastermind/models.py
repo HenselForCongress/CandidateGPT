@@ -36,8 +36,8 @@ class UserType(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True, comment="Auto incrementing primary key")
     name = db.Column(db.Enum(UserTypeEnum), unique=True, nullable=False, comment="Name of the user type (e.g., Admin, User, Viewer)")
     description = db.Column(db.String(255), nullable=True, comment="Description of the user type")
-    created_at = db.Column(db.DateTime, server_default=func.now(), nullable=False, comment="Record creation date")
-    updated_at = db.Column(db.DateTime, server_default=func.now(), onupdate=func.now(), nullable=False, comment="Record last update date")
+    created_at = db.Column(db.DateTime, default=func.now(), nullable=False, comment="Record creation date")
+    updated_at = db.Column(db.DateTime, default=func.now(), onupdate=func.now(), nullable=False, comment="Record last update date")
 
     def __repr__(self):
         return f"<UserType {self.name}>"
@@ -49,8 +49,8 @@ class Organization(db.Model):
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True, comment="Auto incrementing primary key")
     name = db.Column(db.String(255), unique=True, nullable=False, comment="Name of the organization")
-    created_at = db.Column(db.DateTime, server_default=func.now(), nullable=False, comment="Record creation date")
-    updated_at = db.Column(db.DateTime, server_default=func.now(), onupdate=func.now(), nullable=False, comment="Record last update date")
+    created_at = db.Column(db.DateTime, default=func.now(), nullable=False, comment="Record creation date")
+    updated_at = db.Column(db.DateTime, default=func.now(), onupdate=func.now(), nullable=False, comment="Record last update date")
 
     def __repr__(self):
         return f"<Organization {self.name}>"
@@ -85,8 +85,8 @@ class User(db.Model, UserMixin):
     organization_id = db.Column(db.Integer, db.ForeignKey('entities.organizations.id', ondelete='SET NULL'), nullable=True, comment="Foreign key to the organization")
     user_type_id = db.Column(db.Integer, db.ForeignKey('meta.user_types.id', ondelete='CASCADE'), nullable=False, comment="Foreign key to the user type")
     last_login = db.Column(db.DateTime, nullable=True, comment="Last login time")
-    created_at = db.Column(db.DateTime, server_default=func.now(), nullable=False, comment="Record creation date")
-    updated_at = db.Column(db.DateTime, server_default=func.now(), onupdate=func.now(), nullable=False, comment="Record last update date")
+    created_at = db.Column(db.DateTime, default=func.now(), nullable=False, comment="Record creation date")
+    updated_at = db.Column(db.DateTime, default=func.now(), onupdate=func.now(), nullable=False, comment="Record last update date")
 
     organization = db.relationship('Organization', backref='users', lazy='joined')
     queries = db.relationship('Query', backref='user', lazy=True, cascade="all, delete-orphan")
@@ -151,8 +151,8 @@ class Query(db.Model):
     timestamp = db.Column(db.DateTime, default=datetime.utcnow, comment="Time when query was made")
     ip_address = db.Column(db.String(45), nullable=True, comment="IP address from which the query was made")
     user_id = db.Column(UUID(as_uuid=True), db.ForeignKey('entities.users.user_id', ondelete='CASCADE'), nullable=False, comment="ID of the user who made the query")
-    created_at = db.Column(db.DateTime, server_default=func.now(), nullable=False, comment="Record creation date")
-    updated_at = db.Column(db.DateTime, server_default=func.now(), nullable=False, comment="Record last update date")
+    created_at = db.Column(db.DateTime, default=func.now(), nullable=False, comment="Record creation date")
+    updated_at = db.Column(db.DateTime, default=func.now(), nullable=False, comment="Record last update date")
 
     response = db.relationship('Response', back_populates='query', uselist=False)  # Establish a bidirectional relationship with Response
 
@@ -171,8 +171,8 @@ class Response(db.Model):
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True, comment="Auto incrementing primary key")
     response_text = db.Column(db.Text, nullable=False, comment="Response text")
-    created_at = db.Column(db.DateTime, server_default=func.now(), nullable=False, comment="Record creation date")
-    updated_at = db.Column(db.DateTime, server_default=func.now(), onupdate=func.now(), nullable=False, comment="Record last update date")
+    created_at = db.Column(db.DateTime, default=func.now(), nullable=False, comment="Record creation date")
+    updated_at = db.Column(db.DateTime, default=func.now(), onupdate=func.now(), nullable=False, comment="Record last update date")
 
     query = db.relationship('Query', back_populates='response', uselist=False)  # Establish bidirectional relationship without FK
 
@@ -208,8 +208,8 @@ class Activity(db.Model):
     activity_type = db.Column(db.String(50), nullable=False, comment="Type of activity (e.g., login, update)")
     description = db.Column(db.Text, nullable=False, comment="Detailed description of the activity")
     user_id = db.Column(UUID(as_uuid=True), db.ForeignKey('entities.users.user_id', ondelete='CASCADE'), nullable=False, comment="ID of the user who performed the activity")
-    created_at = db.Column(db.DateTime, server_default=func.now(), nullable=False, comment="Record creation date")
-    updated_at = db.Column(db.DateTime, server_default=func.now(), nullable=False, comment="Record last update date")
+    created_at = db.Column(db.DateTime, default=func.now(), nullable=False, comment="Record creation date")
+    updated_at = db.Column(db.DateTime, default=func.now(), nullable=False, comment="Record last update date")
 
     def serialize(self):
         """Serialize the Activity object to a dictionary."""
