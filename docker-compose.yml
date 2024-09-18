@@ -33,7 +33,6 @@ services:
     restart: always
     volumes:
       - ${LOG_PATH}:/logs
-      - ./entrypoint.sh:/entrypoint.sh
     env_file: stack.env
     depends_on:
       - db_postgres

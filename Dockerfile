@@ -21,5 +21,14 @@ RUN poetry install --only main || (poetry lock --no-update && poetry install --o
 # Copy the rest of the code
 COPY . /app/
 
+# Copy the entrypoint script into the container
+COPY entrypoint.sh /entrypoint.sh
+
+# Make entrypoint.sh executable
+RUN chmod +x /entrypoint.sh
+
+# Set entrypoint
+ENTRYPOINT ["/entrypoint.sh"]
+
 # Command to run the application
 CMD ["python3", "-m", "run"]
