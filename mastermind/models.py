@@ -11,6 +11,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from marshmallow import Schema, fields, validate
 from flask_login import UserMixin
+from .utils import logger
 
 # Initialize SQLAlchemy and Migrate
 db = SQLAlchemy()
@@ -48,7 +49,7 @@ class UserSchema(Schema):
     created_at = fields.DateTime()
     updated_at = fields.DateTime()
 
-class User(db.Model):
+class User(db.Model, UserMixin):
     """User model for storing user details and credentials."""
     __tablename__ = 'users'
     __table_args__ = {'schema': 'entities'}
@@ -56,7 +57,7 @@ class User(db.Model):
     user_id = db.Column(UUID(as_uuid=True), primary_key=True, default=generate_uuid, comment="Unique user ID")
     email = db.Column(db.String(255), unique=True, nullable=False, comment="User's email address", index=True)
     password_hash = db.Column(db.Text, nullable=False, comment="Hashed password")
-    _is_active = db.Column('is_active', db.Boolean, default=True, comment="Is the user active?")
+    _is_active = db.Column('is_active', db.Boolean, default=True, nullable=False, comment="Is the user active?")
     user_type_id = db.Column(db.Integer, db.ForeignKey('meta.user_types.id', ondelete='CASCADE'), nullable=False, comment="Foreign key to the user type")
     last_login = db.Column(db.DateTime, nullable=True, comment="Last login time")
     created_at = db.Column(db.DateTime, server_default=func.now(), nullable=False, comment="Record creation date")
@@ -66,10 +67,12 @@ class User(db.Model):
 
     def set_password(self, password):
         """Hash and set the user's password."""
+        current_app.logger.debug(f"Setting password for user {self.email}")
         self.password_hash = generate_password_hash(password)
 
     def check_password(self, password):
         """Check if the provided password matches the stored hash."""
+        current_app.logger.debug(f"Checking password for user {self.email}")
         return check_password_hash(self.password_hash, password)
 
     def get_id(self):
@@ -84,7 +87,13 @@ class User(db.Model):
     @property
     def is_active(self):
         """Return True if the user is active."""
-        return self.is_active
+        current_app.logger.debug(f"Accessing is_active for user {self.email}")
+        return self._is_active
+
+    @is_active.setter
+    def is_active(self, value):
+        """Set the user's active status."""
+        self._is_active = value
 
     @property
     def is_anonymous(self):
