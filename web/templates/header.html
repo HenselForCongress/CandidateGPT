@@ -11,10 +11,11 @@
                 <li><a href="/" class="usa-nav__link">Home</a></li>
                 <li><a href="{{ url_for('web_bp.about') }}" class="usa-nav__link">About</a></li>
                 <li><a href="https://github.com/HenselForCongress/CandidateGPT/issues/new/choose" target=_blank class="usa-nav__link">Report a 🐛</a></li>
-                <li><a href="https://github.com/HenselForCongress/CandidateGPT" target=_blank class="usa-nav__link">GitHub</a></li>
+                <li><a href="https://github.com/HenselForCongress/CandidateGPT" target=_blank class="usa-nav__link">GitHub</a></li> |
                 {% if current_user.is_authenticated %}
+                    <li><a href="{{ url_for('auth.profile') }}" class="usa-nav__link">Profile</a></li>
                     {% if current_user.user_type.name.value == 'ADMIN' %}
-                        <li><a href="{{ url_for('admin.admin_dashboard') }}" class="usa-nav__link">Admin Dashboard</a></li>
+                        <li><a href="{{ url_for('admin.admin_dashboard') }}" class="usa-nav__link">Admin</a></li>
                     {% endif %}
                     <li><a href="{{ url_for('auth.logout') }}" class="usa-nav__link">Logout</a></li>
                 {% else %}

@@ -1,7 +1,7 @@
 # web/auth.py
 from flask import Blueprint, render_template, redirect, url_for, flash, request, abort, current_app
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
-from mastermind.models import db, User, UserType, UserTypeEnum
+from mastermind.models import db, User, UserType, UserTypeEnum, Organization
 from mastermind.utils.email import send_email
 from mastermind.utils.token_utils import generate_token, confirm_token
 from mastermind.utils.logging import logger
@@ -235,6 +235,7 @@ def register():
     return render_template('auth/register.html', form=form)
 
 
+
 @auth_bp.route('/profile', methods=['GET', 'POST'])
 @login_required
 def profile():
@@ -242,7 +243,7 @@ def profile():
         given_name = request.form.get('given_name')
         family_name = request.form.get('family_name')
         preferred_name = request.form.get('preferred_name')
-        organization_name = request.form.get('organization')
+        organization_name = request.form.get('organization').strip()
         notes = request.form.get('notes')
 
         # Update user profile
@@ -260,7 +261,10 @@ def profile():
                 db.session.add(organization)
                 db.session.flush()  # Flush to get the new organization ID
 
-            current_user.organization_id = organization.id
+            # Assign the whole object instead of just the ID
+            current_user.organization = organization
+        else:
+            current_user.organization = None
 
         try:
             db.session.commit()

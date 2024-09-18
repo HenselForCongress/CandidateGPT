@@ -146,7 +146,7 @@ class Query(db.Model):
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True, comment="Auto incrementing primary key")
     query_text = db.Column(db.Text, nullable=False, comment="Text of the query made by the user")
-    response_id = db.Column(db.Integer, db.ForeignKey('logs.responses.id', ondelete='CASCADE'), nullable=True, comment="Id of the response received")
+    response_id = db.Column(db.Integer, db.ForeignKey('logs.responses.id', ondelete='CASCADE'), nullable=True, comment="ID of the response received")
     settings_selected = db.Column(db.String(255), nullable=True, comment="Settings used when making the query")
     timestamp = db.Column(db.DateTime, default=datetime.utcnow, comment="Time when query was made")
     ip_address = db.Column(db.String(45), nullable=True, comment="IP address from which the query was made")
@@ -154,15 +154,7 @@ class Query(db.Model):
     created_at = db.Column(db.DateTime, server_default=func.now(), nullable=False, comment="Record creation date")
     updated_at = db.Column(db.DateTime, server_default=func.now(), nullable=False, comment="Record last update date")
 
-    response = db.relationship('Response', back_populates='query', uselist=False)  # Use back_populates for bidirectional relationship
-
-    def __init__(self, query_text, response_text, settings_selected, user_id):
-        self.query_text = query_text
-        self.response_text = response_text
-        self.settings_selected = settings_selected
-        self.user_id = user_id
-        self.ip_address = request.remote_addr  # Capture the IP address
-        logger.debug(f"New Query created: {self.serialize()}")
+    response = db.relationship('Response', back_populates='query', uselist=False)  # Establish a bidirectional relationship with Response
 
     def serialize(self):
         """Serialize the Query object to a dictionary."""
@@ -175,14 +167,14 @@ class Query(db.Model):
 class Response(db.Model):
     """Response model for storing responses separately if needed."""
     __tablename__ = 'responses'
-    __table_args__ = {'schema': 'logs', 'extend_existing': True}  # Add extend_existing=True
+    __table_args__ = {'schema': 'logs', 'extend_existing': True}
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True, comment="Auto incrementing primary key")
     response_text = db.Column(db.Text, nullable=False, comment="Response text")
     created_at = db.Column(db.DateTime, server_default=func.now(), nullable=False, comment="Record creation date")
     updated_at = db.Column(db.DateTime, server_default=func.now(), onupdate=func.now(), nullable=False, comment="Record last update date")
 
-    query = db.relationship('Query', back_populates='response')  # Establish bidirectional relationship without FK
+    query = db.relationship('Query', back_populates='response', uselist=False)  # Establish bidirectional relationship without FK
 
     def serialize(self):
         """Serialize the Response object to a dictionary."""

@@ -6,7 +6,8 @@ import json
 import re
 from dotenv import load_dotenv
 from mastermind.utils import logger
-from mastermind.models import Query, db
+from mastermind.models import Query, db, Response
+from flask_login import current_user  # Import current_user directly
 
 # Load environment variables
 load_dotenv()
@@ -14,16 +15,9 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 CLOUDFLARE_ACCOUNT_ID = os.getenv("CLOUDFLARE_ACCOUNT_ID")
 CLOUDFLARE_AI_GATEWAY = os.getenv("CLOUDFLARE_AI_GATEWAY")
 
-def generate_response(question, data, config):
-    """Generate a response using the OpenAI API based on the question provided and configuration settings."""
-    logger.debug("🎤 We're starting the generate_response function. Ready for it?")
-
-    data_content = "\n\n".join(data.values())
-    user_prompt = config['ai']['prompt']
-    logger.debug("Loaded user prompt from config. Shake it off!")
-
-    # Construct the system prompt with updated instructions
-    system_prompt = (
+def construct_system_prompt():
+    """Construct the system prompt for the AI model."""
+    return (
         "You are an assistant that answers questions based solely on the provided data. "
         "Respond from Don Beyer's perspective using the first person. "
         "Avoid using phrases like 'as a member of Congress' or 'visit my website.' "
@@ -57,17 +51,20 @@ def generate_response(question, data, config):
         '  "links": []\n'
         "}"
     )
-    logger.debug("Constructed system prompt. This is why we can't have nice things...without good logging!")
 
-    full_prompt = f"{user_prompt}\n\n{data_content}\n\nQ: {question}\nA:"
-    logger.debug("Constructed full prompt for the assistant. Ready to begin again.")
+def construct_full_prompt(user_prompt, data_content, question):
+    """Construct the full prompt for the assistant."""
+    return f"{user_prompt}\n\n{data_content}\n\nQ: {question}\nA:"
 
-    headers = {
+def prepare_headers():
+    """Prepare the headers for the API request."""
+    return {
         "Authorization": f"Bearer {OPENAI_API_KEY}",
         "Content-Type": "application/json"
     }
-    logger.debug("Set up headers for the API request. Stay, stay, stay...on this page!")
 
+def prepare_json_payload(system_prompt, full_prompt, config):
+    """Prepare the JSON payload for the API request."""
     json_data = {
         "model": config['ai']['model'],
         "messages": [
@@ -75,26 +72,85 @@ def generate_response(question, data, config):
             {"role": "user", "content": full_prompt}
         ]
     }
+    json_data.update(config['ai']['settings'])  # Add settings from config
+    return json_data
 
-    # Dynamically add settings from config.yml to json_data
-    json_data.update(config['ai']['settings'])
-    logger.debug("Prepared JSON payload for the API request. It's time to go!")
+def extract_json_from_response(text):
+    """Extract the JSON object from the assistant's response."""
+    text = text.strip()
+    if text.startswith('```') and text.endswith('```'):
+        text = text[3:-3].strip()
+        if text.lower().startswith('json'):
+            text = text[4:].strip()
+    json_match = re.search(r'\{.*\}', text, re.DOTALL)
+    if json_match:
+        return json_match.group(0)
+    return None
 
+def log_query(question, config):
+    """Log the query to the database."""
+    query_record = Query(
+        query_text=question,
+        settings_selected=json.dumps(config['ai']['settings']),
+        user_id=current_user.user_id
+    )
+    db.session.add(query_record)
+    db.session.commit()
+    return query_record
+
+def process_response(response):
+    """Process the API response and extract useful information."""
     result = {
         'answer': '',
         'warning': '',
         'links': []
     }
 
-    # Log query
-    query_record = Query(
-        query_text=question,
-        response_text='',  # Placeholder
-        settings_selected=json.dumps(config['ai']['settings']),
-        user_id=current_user.user_id
-    )
-    db.session.add(query_record)
-    db.session.commit()
+    if response.status_code == 200:
+        response_json = response.json()
+        answer_content = response_json['choices'][0]['message']['content'].strip()
+
+        # Extract the JSON string
+        json_str = extract_json_from_response(answer_content)
+
+        if json_str:
+            try:
+                answer_data = json.loads(json_str)
+                result['answer'] = answer_data.get('answer', '')
+                inference = answer_data.get('inference', False)
+                if inference:
+                    result['warning'] = "The response uses inference or content not directly mentioned in the source data."
+                result['links'] = answer_data.get('links', [])
+            except json.JSONDecodeError as e:
+                logger.error(f"Failed to parse assistant's response as JSON: {e}")
+                result['answer'] = answer_content
+                result['warning'] = "The assistant's response could not be parsed as JSON."
+        else:
+            logger.error("No JSON object found in the assistant's response.")
+            result['answer'] = answer_content
+            result['warning'] = "The assistant's response does not contain a JSON object."
+    else:
+        logger.error(f"API request failed with status code {response.status_code}.")
+        result['answer'] = f"Error: {response.status_code} - {response.text}"
+
+    return result
+
+def generate_response(question, data, config):
+    """Generate a response using the OpenAI API based on the question provided and configuration settings."""
+    logger.debug("🎤 We're starting the generate_response function. Ready for it?")
+
+    data_content = "\n\n".join(data.values())
+    user_prompt = config['ai']['prompt']
+    logger.debug("Loaded user prompt from config. Shake it off!")
+
+    # Construct prompts and headers
+    system_prompt = construct_system_prompt()
+    full_prompt = construct_full_prompt(user_prompt, data_content, question)
+    headers = prepare_headers()
+    json_data = prepare_json_payload(system_prompt, full_prompt, config)
+
+    # Log the query to the database
+    query_record = log_query(question, config)
 
     try:
         logger.info("Sending request to OpenAI API. Are you ready for it?")
@@ -105,54 +161,28 @@ def generate_response(question, data, config):
         )
         logger.debug(f"Received response with status code {response.status_code}. Everything has changed!")
 
-        if response.status_code == 200:
-            response_json = response.json()
-            logger.debug("Parsed response JSON successfully. Gorgeous!")
+        # Process the response
+        result = process_response(response)
 
-            answer_content = response_json['choices'][0]['message']['content'].strip()
-            logger.debug(f"Assistant's raw response: {answer_content}")
+        # Save the response to the database
+        if result['answer']:
+            new_response = Response(response_text=result['answer'])
+            db.session.add(new_response)
+            db.session.flush()  # Flush to get the new response ID
 
-            # Function to extract JSON object from the assistant's response
-            def extract_json_from_response(text):
-                text = text.strip()
-                if text.startswith('```') and text.endswith('```'):
-                    text = text[3:-3].strip()
-                    if text.lower().startswith('json'):
-                        text = text[4:].strip()
-                json_match = re.search(r'\{.*\}', text, re.DOTALL)
-                if json_match:
-                    return json_match.group(0)
-                else:
-                    return None
-
-            # Extract the JSON string
-            json_str = extract_json_from_response(answer_content)
-
-            if json_str:
-                try:
-                    answer_data = json.loads(json_str)
-                    result['answer'] = answer_data.get('answer', '')
-                    inference = answer_data.get('inference', False)
-                    if inference:
-                        result['warning'] = "The response uses inference or content not directly mentioned in the source data."
-                        logger.warning("Inference detected in the assistant's response. You need to calm down.")
-                    result['links'] = answer_data.get('links', [])
-                    logger.debug("Extracted data from the assistant's response. Clean.")
-                except json.JSONDecodeError as e:
-                    logger.error(f"Failed to parse assistant's response as JSON: {e} This is why we can't have nice things.")
-                    result['answer'] = answer_content
-                    result['warning'] = "The assistant's response could not be parsed as JSON."
-            else:
-                logger.error("No JSON object found in the assistant's response. Bad blood!")
-                result['answer'] = answer_content
-                result['warning'] = "The assistant's response does not contain a JSON object."
-        else:
-            logger.error(f"API request failed with status code {response.status_code}. I knew you were trouble.")
-            result['answer'] = f"Error: {response.status_code} - {response.text}"
+            # Update the query with the response ID
+            query_record.response_id = new_response.id
+            db.session.commit()
+            logger.info("Response saved and query updated successfully.")
 
     except Exception as e:
-        logger.exception("An exception occurred during the API request. Out of the woods?")
-        result['answer'] = f"Exception: {str(e)}"
+        logger.exception("An exception occurred during the API request.")
+        result = {
+            'answer': f"Exception: {str(e)}",
+            'warning': '',
+            'links': []
+        }
+        db.session.rollback()  # Rollback in case of an error
 
-    logger.debug("Finished processing the generate_response function. Long live.")
+    logger.debug("Finished processing the generate_response function.")
     return result
