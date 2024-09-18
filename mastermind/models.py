@@ -78,7 +78,7 @@ class User(db.Model, UserMixin):
     email = db.Column(db.String(255), unique=True, nullable=False, comment="User's email address", index=True)
     password_hash = db.Column(db.Text, nullable=False, comment="Hashed password")
     is_active = db.Column(db.Boolean, default=True, nullable=False, comment="Is the user active?")
-    given_name = db.Column(db.String(255), nullable=False, comment="User's given name")
+    given_name = db.Column(db.String(255), nullable=True, comment="User's given name")
     family_name = db.Column(db.String(255), nullable=True, comment="User's family name (if applicable)")
     preferred_name = db.Column(db.String(255), nullable=True, comment="User's preferred name")
     notes = db.Column(db.Text, nullable=True, comment="Notes about the user, including how they plan to use the tool")
