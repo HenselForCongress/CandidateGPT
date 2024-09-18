@@ -33,7 +33,8 @@ def begin_era():
         username = os.getenv('POSTGRES_USER')
         password = os.getenv('POSTGRES_PASSWORD')
         host = os.getenv('POSTGRES_HOST')
-        port = os.getenv('POSTGRES_PORT')
+        # port = os.getenv('POSTGRES_PORT')
+        port = 5432
         database = os.getenv('POSTGRES_DATABASE')
         app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql://{username}:{password}@{host}:{port}/{database}'
     except KeyError as e:
