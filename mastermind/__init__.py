@@ -26,16 +26,22 @@ def apply_migrations():
     """Run Alembic migrations using subprocess."""
     try:
         logger.info("Applying database migrations using Alembic command...")
+
         result = subprocess.run(
             ["alembic", "upgrade", "head"],
             check=True,
             stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE
+            stderr=subprocess.PIPE,
+            timeout=300  # Timeout after 5 minutes
         )
+
         logger.info(f"Alembic output: {result.stdout.decode()}")
         logger.info("Database migrations applied successfully.")
+    except subprocess.TimeoutExpired as e:
+        logger.error(f"Alembic command timed out: {str(e)}", exc_info=True)
+        raise
     except subprocess.CalledProcessError as e:
-        logger.error(f"Error applying database migrations: {e.stderr.decode()}")
+        logger.error(f"Error applying database migrations: {e.stderr.decode()}", exc_info=True)
         raise
     except Exception as e:
         logger.error(f"Unexpected error during alembic migration: {str(e)}", exc_info=True)
