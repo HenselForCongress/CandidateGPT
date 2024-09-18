@@ -5,7 +5,7 @@ from flask import Flask
 from flask_login import LoginManager
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
-
+import sentry_sdk
 
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
@@ -67,5 +67,16 @@ def begin_era():
     app.register_blueprint(auth_bp)
     app.register_blueprint(admin_bp)
 
+    sentry_sdk.init(
+        dsn = os.getenv('SENRTY_DSN'),
+        # Set traces_sample_rate to 1.0 to capture 100%
+        # of transactions for tracing.
+        traces_sample_rate=1.0,
+        # Set profiles_sample_rate to 1.0 to profile 100%
+        # of sampled transactions.
+        sample_rate=0.25,
+        # We recommend adjusting this value in production.
+        profiles_sample_rate=1.0,
+    )
 
     return app
