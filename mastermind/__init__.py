@@ -1,5 +1,6 @@
 # mastermind/__init__.py
 import os
+import sys
 from datetime import timedelta
 from flask import Flask
 from flask_login import LoginManager
@@ -46,8 +47,8 @@ def begin_era():
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'default-secret-key')
 
-    # Addl Security stuff
-    app.config['SESSION_COOKIE_SECURE'] = False # Temp disable
+    # Additional security configurations
+    app.config['SESSION_COOKIE_SECURE'] = False  # Temporary disable
     app.config['SESSION_COOKIE_HTTPONLY'] = True
     app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
     app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=30)
@@ -100,10 +101,7 @@ def begin_era():
                 logger.info("Database migrations applied successfully.")
             except Exception as e:
                 logger.error(f"Error applying database migrations: {e}")
-                # Depending on your requirements, you might want to exit the application
-                # or handle the error differently
+                # `raise` will propagate the exception up. Ensure this behavior is what you want.
                 raise
-
-    return app
 
     return app
