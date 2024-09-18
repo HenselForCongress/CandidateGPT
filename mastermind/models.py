@@ -24,9 +24,9 @@ def generate_uuid():
     return uuid_generated
 
 class UserTypeEnum(enum.Enum):
-    ADMIN = "Admin"
-    USER = "User"
-    VIEWER = "Viewer"
+    ADMIN = "ADMIN"
+    USER = "USER"
+    VIEWER = "VIEWER"
 
 class UserType(db.Model):
     """UserType model to define different user roles such as admin, user, viewer."""
@@ -37,15 +37,33 @@ class UserType(db.Model):
     name = db.Column(db.Enum(UserTypeEnum), unique=True, nullable=False, comment="Name of the user type (e.g., Admin, User, Viewer)")
     description = db.Column(db.String(255), nullable=True, comment="Description of the user type")
     created_at = db.Column(db.DateTime, server_default=func.now(), nullable=False, comment="Record creation date")
-    updated_at = db.Column(db.DateTime, server_default=func.now(), nullable=False, comment="Record last update date")
+    updated_at = db.Column(db.DateTime, server_default=func.now(), onupdate=func.now(), nullable=False, comment="Record last update date")
 
     def __repr__(self):
         return f"<UserType {self.name}>"
+
+class Organization(db.Model):
+    """Organization model for storing organization details."""
+    __tablename__ = 'organizations'
+    __table_args__ = {'schema': 'entities'}
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True, comment="Auto incrementing primary key")
+    name = db.Column(db.String(255), unique=True, nullable=False, comment="Name of the organization")
+    created_at = db.Column(db.DateTime, server_default=func.now(), nullable=False, comment="Record creation date")
+    updated_at = db.Column(db.DateTime, server_default=func.now(), onupdate=func.now(), nullable=False, comment="Record last update date")
+
+    def __repr__(self):
+        return f"<Organization {self.name}>"
 
 class UserSchema(Schema):
     user_id = fields.UUID()
     email = fields.Email(required=True)
     is_active = fields.Boolean()
+    given_name = fields.String()
+    family_name = fields.String()
+    preferred_name = fields.String()
+    organization = fields.String()
+    notes = fields.String()
     user_type = fields.String(validate=validate.OneOf([e.value for e in UserTypeEnum]))
     last_login = fields.DateTime()
     created_at = fields.DateTime()
@@ -60,12 +78,19 @@ class User(db.Model, UserMixin):
     email = db.Column(db.String(255), unique=True, nullable=False, comment="User's email address", index=True)
     password_hash = db.Column(db.Text, nullable=False, comment="Hashed password")
     is_active = db.Column(db.Boolean, default=True, nullable=False, comment="Is the user active?")
+    given_name = db.Column(db.String(255), nullable=False, comment="User's given name")
+    family_name = db.Column(db.String(255), nullable=True, comment="User's family name (if applicable)")
+    preferred_name = db.Column(db.String(255), nullable=True, comment="User's preferred name")
+    notes = db.Column(db.Text, nullable=True, comment="Notes about the user, including how they plan to use the tool")
+    organization_id = db.Column(db.Integer, db.ForeignKey('entities.organizations.id', ondelete='SET NULL'), nullable=True, comment="Foreign key to the organization")
     user_type_id = db.Column(db.Integer, db.ForeignKey('meta.user_types.id', ondelete='CASCADE'), nullable=False, comment="Foreign key to the user type")
     last_login = db.Column(db.DateTime, nullable=True, comment="Last login time")
     created_at = db.Column(db.DateTime, server_default=func.now(), nullable=False, comment="Record creation date")
-    updated_at = db.Column(db.DateTime, server_default=func.now(), nullable=False, comment="Record last update date")
+    updated_at = db.Column(db.DateTime, server_default=func.now(), onupdate=func.now(), nullable=False, comment="Record last update date")
+
+    organization = db.relationship('Organization', backref='users', lazy='joined')
     queries = db.relationship('Query', backref='user', lazy=True, cascade="all, delete-orphan")
-    user_type = db.relationship('UserType', backref='users')
+    user_type = db.relationship('UserType', backref='users', lazy='joined')
 
     def set_password(self, password):
         """Hash and set the user's password."""
@@ -121,13 +146,15 @@ class Query(db.Model):
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True, comment="Auto incrementing primary key")
     query_text = db.Column(db.Text, nullable=False, comment="Text of the query made by the user")
-    response_text = db.Column(db.Text, nullable=False, comment="Response text for the query")
+    response_id = db.Column(db.Integer, db.ForeignKey('logs.responses.id', ondelete='CASCADE'), nullable=True, comment="Id of the response received")
     settings_selected = db.Column(db.String(255), nullable=True, comment="Settings used when making the query")
     timestamp = db.Column(db.DateTime, default=datetime.utcnow, comment="Time when query was made")
     ip_address = db.Column(db.String(45), nullable=True, comment="IP address from which the query was made")
     user_id = db.Column(UUID(as_uuid=True), db.ForeignKey('entities.users.user_id', ondelete='CASCADE'), nullable=False, comment="ID of the user who made the query")
     created_at = db.Column(db.DateTime, server_default=func.now(), nullable=False, comment="Record creation date")
     updated_at = db.Column(db.DateTime, server_default=func.now(), nullable=False, comment="Record last update date")
+
+    response = db.relationship('Response', back_populates='query', uselist=False)  # Use back_populates for bidirectional relationship
 
     def __init__(self, query_text, response_text, settings_selected, user_id):
         self.query_text = query_text
@@ -145,23 +172,17 @@ class Query(db.Model):
     def __repr__(self):
         return f"<Query {self.id} by User {self.user_id}>"
 
-class ResponseSchema(Schema):
-    id = fields.Integer()
-    response_text = fields.String(required=True)
-    query_id = fields.Integer()  # Foreign key to Query
-    created_at = fields.DateTime()
-    updated_at = fields.DateTime()
-
 class Response(db.Model):
     """Response model for storing responses separately if needed."""
     __tablename__ = 'responses'
-    __table_args__ = {'schema': 'logs'}
+    __table_args__ = {'schema': 'logs', 'extend_existing': True}  # Add extend_existing=True
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True, comment="Auto incrementing primary key")
     response_text = db.Column(db.Text, nullable=False, comment="Response text")
-    query_id = db.Column(db.Integer, db.ForeignKey('logs.queries.id', ondelete='CASCADE'), nullable=False, comment="Associated query ID")
     created_at = db.Column(db.DateTime, server_default=func.now(), nullable=False, comment="Record creation date")
-    updated_at = db.Column(db.DateTime, server_default=func.now(), nullable=False, comment="Record last update date")
+    updated_at = db.Column(db.DateTime, server_default=func.now(), onupdate=func.now(), nullable=False, comment="Record last update date")
+
+    query = db.relationship('Query', back_populates='response')  # Establish bidirectional relationship without FK
 
     def serialize(self):
         """Serialize the Response object to a dictionary."""
@@ -169,7 +190,14 @@ class Response(db.Model):
         return ResponseSchema().dump(self)
 
     def __repr__(self):
-        return f"<Response {self.id} for Query {self.query_id}>"
+        return f"<Response {self.id}>"
+
+class ResponseSchema(Schema):
+    id = fields.Integer()
+    response_text = fields.String(required=True)
+    query_id = fields.Integer()  # Foreign key to Query
+    created_at = fields.DateTime()
+    updated_at = fields.DateTime()
 
 class ActivitySchema(Schema):
     id = fields.Integer()
