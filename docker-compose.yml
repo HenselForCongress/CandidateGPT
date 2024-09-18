@@ -1,9 +1,7 @@
 
 
 services:
-
-
-
+# This is ROUGH and mostly for my servers, I'll have a better one later... or  feel free to submit a pr :)
 
   db_postgres:
     container_name: db_postgres
@@ -30,7 +28,7 @@ services:
   candidategpt:
     container_name: candidategpt
     hostname: candidategpt
-    build: .
+    image: ghcr.io/henselforcongress/candidategpt:latest
     restart: always
     volumes:
       - ${LOG_PATH}:/logs
