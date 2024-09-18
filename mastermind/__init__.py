@@ -60,7 +60,7 @@ def begin_era():
     test_logger()
 
     # Add ProxyFix middleware
-    pp.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_port=1, x_prefix=1)
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_port=1, x_prefix=1)
 
     # Initialize database and migration with app
     db.init_app(app)
