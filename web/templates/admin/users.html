@@ -6,7 +6,7 @@
 {% block content %}
 <section class="usa-section">
     <h2 class="usa-heading">User Management</h2>
-    <p class="usa-hint">Manage users, assign roles, and control access. Use the form below to add or modify users.</p>
+    <p class="usa-hint">Manage users, assign roles, and control access.</p>
     <a href="{{ url_for('admin.add_user') }}" class="usa-button">Add New User</a>
     <table class="usa-table">
         <thead>
@@ -28,9 +28,7 @@
                 <td>{{ user.last_login.strftime('%B %d, %Y, %I:%M %p') if user.last_login else 'Never' }}</td>
                 <td>{{ user.created_at.strftime('%B %d, %Y, %I:%M %p') }}</td>
                 <td>
-                    <form action="{{ url_for('admin.delete_user', user_id=user.user_id) }}" method="post" style="display:inline;">
-                        <button type="submit" class="usa-button usa-button--secondary">{{ 'Block' if user.is_active else 'Unblock' }}</button>
-                    </form>
+                    <a href="{{ url_for('admin.edit_user', user_id=user.user_id) }}" class="usa-button">Edit</a>
                 </td>
             </tr>
         {% endfor %}

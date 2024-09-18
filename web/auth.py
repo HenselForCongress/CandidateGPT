@@ -154,6 +154,7 @@ def logout():
     flash('You have been logged out.', 'info')
     return redirect(url_for('auth.login'))
 
+
 # Password Reset Request Route
 @auth_bp.route('/password-reset', methods=['GET', 'POST'])
 @limiter.limit("3 per minute")
@@ -187,24 +188,37 @@ def reset_password(token):
         return redirect(url_for('auth.password_reset_request'))
 
     user = User.query.filter_by(email=email).first_or_404()
-
     form = ResetPasswordForm()
+
     if form.validate_on_submit():
         password = form.password.data
+        logger.debug(f"Received new password for user {email}.")
 
+        # Ensure that the password strength check is passed
         if not is_strong_password(password):
             logger.warning(f"Weak password attempt during reset for user {email}.")
             flash('Password must be at least 42 characters long and include uppercase, lowercase, number, and special character.', 'danger')
             return render_template('auth/reset_password.html', form=form)
 
-        user.set_password(password)
-        db.session.commit()
-        logger.info(f"Password updated for user {user.email} from IP {request.remote_addr}.")
-        flash('Your password has been updated!', 'success')
-        return redirect(url_for('auth.login'))
+        # Update the user's password
+        try:
+            # Set the new password
+            user.set_password(password)
+            logger.debug(f"Password hashed and set for user {email}: {user.password_hash}")
+            # Commit the change to the database
+            db.session.commit()
+            logger.info(f"Password updated for user {user.email} from IP {request.remote_addr}.")
+            flash('Your password has been updated!', 'success')
+            return redirect(url_for('auth.login'))  # Redirect to the login page
+        except Exception as e:
+            # Rollback in case of error
+            db.session.rollback()
+            logger.error(f"Error updating password for user {email}: {e}")
+            flash('An error occurred while updating your password.', 'danger')
 
+    # Add debug log for rendering the form when it's not submitted or validation fails
+    logger.debug(f"Rendering password reset form for user {email}.")
     return render_template('auth/reset_password.html', form=form)
-
 
 @auth_bp.route('/register', methods=['GET', 'POST'])
 def register():

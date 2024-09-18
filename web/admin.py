@@ -2,6 +2,9 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, abort
 from flask_login import login_required, current_user
 from functools import wraps
+from werkzeug.security import generate_password_hash
+import string
+import secrets
 
 from mastermind.models import db, User, UserType, UserTypeEnum
 from mastermind.utils import generate_token, send_email, logger
@@ -49,13 +52,18 @@ def list_users():
         abort(500)
 
 
+
 @admin_bp.route('/users/add', methods=['GET', 'POST'])
 @login_required
 @admin_required
 def add_user():
     if request.method == 'POST':
         email = request.form['email']
+        given_name = request.form['given_name']
+        family_name = request.form.get('family_name', None)
+        preferred_name = request.form.get('preferred_name', None)
         user_type_name = request.form['user_type']
+
         logger.debug(f"Attempting to add user with email: {email} and user_type: {user_type_name}")
 
         user_type = UserType.query.filter_by(name=user_type_name).first()
@@ -70,20 +78,55 @@ def add_user():
             flash('User with this email already exists.', 'danger')
             return redirect(url_for('admin.add_user'))
 
+        # Generate a random secure password and create a hashed version of it
+        random_password = generate_secure_password()
+        password_hash = generate_password_hash(random_password)
+
         try:
-            new_user = User(email=email, user_type=user_type)
+            new_user = User(
+                email=email,
+                password_hash=password_hash,
+                given_name=given_name,
+                family_name=family_name,
+                preferred_name=preferred_name,
+                user_type=user_type
+            )
             db.session.add(new_user)
             db.session.commit()
 
-            # Generate a password reset token and send a reset email
+            # Generate a password reset token
             token = generate_token(new_user.email, salt='password-reset')
-            send_email(
-                subject='Welcome to CandidateGPT - Set Your Password',
-                recipient=new_user.email,
-                template='email/welcome_with_reset.html',
-                token=token
-            )
-            logger.info(f"New user {new_user.email} added by admin {current_user.email}")
+
+            # Send the welcome and password reset email
+            try:
+                logger.debug(f"Sending welcome email to {new_user.email}.")
+                send_email(
+                    subject='Welcome to CandidateGPT - Set Your Password',
+                    recipient=new_user.email,
+                    template='email/invitation.html',
+                    token=token
+                )
+                logger.info(f"Welcome email sent to {new_user.email}.")
+            except Exception as e:
+                logger.error(f"Error sending welcome email to {new_user.email}: {e}")
+                flash('User was added, but the welcome email could not be sent.', 'danger')
+
+            # Send alert to all admins
+            try:
+                logger.debug("Sending new user alert to all admins.")
+                admin_users = User.query.join(UserType).filter(UserType.name == UserTypeEnum.ADMIN).all()
+                for admin in admin_users:
+                    send_email(
+                        subject='New User Registered',
+                        recipient=admin.email,
+                        template='email/new_user_alert.html',
+                        user=new_user
+                    )
+                logger.info("New user alert sent to all admins.")
+            except Exception as e:
+                logger.error(f"Error sending new user alert emails to admins: {e}")
+                flash('User was added, but the admin alerts could not be sent.', 'danger')
+
             flash('User added successfully.', 'success')
             return redirect(url_for('admin.list_users'))
 
@@ -141,14 +184,32 @@ def edit_user(user_id):
     user = User.query.get_or_404(user_id)
     if request.method == 'POST':
         try:
-            user_type_name = request.form['user_type']
+            user.given_name = request.form.get('given_name')
+            user.family_name = request.form.get('family_name')
+            user.notes = request.form.get('notes')
+            user.is_active = 'is_active' in request.form
+
+            # Handle organization creation or assignment
+            organization_name = request.form.get('organization')
+            if organization_name:
+                organization = Organization.query.filter_by(name=organization_name).first()
+                if not organization:
+                    organization = Organization(name=organization_name)
+                    db.session.add(organization)
+                    db.session.flush()
+                user.organization_id = organization.id
+            else:
+                user.organization_id = None
+
+            # Handle user type change
+            user_type_name = request.form.get('user_type')
             user_type = UserType.query.filter_by(name=user_type_name).first()
             if not user_type:
                 flash('Invalid user type selected.', 'danger')
                 return redirect(url_for('admin.edit_user', user_id=user.user_id))
 
             user.user_type = user_type
-            user.is_active = 'is_active' in request.form  # checkbox input for is_active
+
             db.session.commit()
             flash('User updated successfully.', 'success')
             logger.info(f"User {user.email} updated successfully.")
@@ -160,3 +221,8 @@ def edit_user(user_id):
 
     user_types = UserType.query.all()
     return render_template('admin/edit_user.html', user=user, user_types=user_types)
+
+def generate_secure_password(length=75):
+    characters = string.ascii_letters + string.digits + string.punctuation
+    secure_password = ''.join(secrets.choice(characters) for i in range(length))
+    return secure_password

@@ -10,6 +10,15 @@
         <label for="email" class="usa-label">Email:</label>
         <input type="email" name="email" class="usa-input" required>
 
+        <label for="given_name" class="usa-label">Given Name:</label>
+        <input type="text" name="given_name" class="usa-input" required>
+
+        <label for="family_name" class="usa-label">Family Name:</label>
+        <input type="text" name="family_name" class="usa-input">
+
+        <label for="preferred_name" class="usa-label">Preferred Name:</label>
+        <input type="text" name="preferred_name" class="usa-input">
+
         <label for="user_type" class="usa-label">User Type:</label>
         <select name="user_type" class="usa-select">
             {% for type in user_types %}
@@ -17,7 +26,6 @@
             {% endfor %}
         </select>
 
-        <!-- Add descriptions for the user types -->
         <div class="user-type-descriptions mt-3">
             <h3 class="usa-heading">User Type Descriptions</h3>
             <ul class="usa-list">

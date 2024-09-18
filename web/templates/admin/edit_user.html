@@ -7,14 +7,28 @@
 <section class="usa-section">
     <h2 class="usa-heading">Edit User</h2>
     <form method="POST" class="usa-form">
-        <label for="user_type" class="usa-label">User Type</label>
+        <label for="given_name" class="usa-label">Given Name:</label>
+        <input type="text" name="given_name" class="usa-input" value="{{ user.given_name }}">
+
+        <label for="family_name" class="usa-label">Family Name:</label>
+        <input type="text" name="family_name" class="usa-input" value="{{ user.family_name }}">
+
+        <label for="organization" class="usa-label">Organization:</label>
+        <input type="text" name="organization" class="usa-input" value="{{ user.organization.name if user.organization else '' }}">
+
+        <label for="user_type" class="usa-label">User Type:</label>
         <select name="user_type" class="usa-select">
             {% for user_type in user_types %}
-                <option value="{{ user_type.name }}" {% if user.user_type.name == user_type.name %}selected{% endif %}>{{ user_type.name }}</option>
+                <option value="{{ user_type.name.value }}" {% if user.user_type.name.value == user_type.name.value %}selected{% endif %}>{{ user_type.name.value }}</option>
             {% endfor %}
         </select>
-        <label for="is_active" class="usa-label">Active</label>
+
+        <label for="is_active" class="usa-label">Active:</label>
         <input type="checkbox" name="is_active" id="is_active" {% if user.is_active %}checked{% endif %}>
+
+        <label for="notes" class="usa-label">Notes:</label>
+        <textarea name="notes" class="usa-textarea">{{ user.notes }}</textarea>
+
         <button type="submit" class="usa-button">Update User</button>
     </form>
 </section>
