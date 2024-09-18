@@ -42,9 +42,6 @@ venv.bak/
 instance/
 .webassets-cache
 
-# Docker
-**/Dockerfile
-**/docker-compose.yml
 
 # Other Windows files
 Thumbs.db

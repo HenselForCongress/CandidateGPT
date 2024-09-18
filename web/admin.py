@@ -14,6 +14,7 @@ from flask_wtf.csrf import CSRFProtect
 csrf = CSRFProtect()
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
+csrf.exempt(admin_bp)
 
 def admin_required(f):
     @wraps(f)
@@ -154,8 +155,9 @@ def delete_user(user_id):
         return redirect(url_for('admin.list_users'))
     except Exception as e:
         logger.error(f"Error deleting user {user_id}: {e}")
+        db.session.rollback()
         flash('An error occurred while deleting the user.', 'danger')
-        return redirect(url_for('admin.list_users'))
+        return redirect(url_for('admin.edit_user', user_id=user_id))
 
 
 
@@ -185,6 +187,7 @@ def edit_user(user_id):
     if request.method == 'POST':
         try:
             user.given_name = request.form.get('given_name')
+            user.email = request.form.get('email')
             user.family_name = request.form.get('family_name')
             user.notes = request.form.get('notes')
             user.is_active = 'is_active' in request.form

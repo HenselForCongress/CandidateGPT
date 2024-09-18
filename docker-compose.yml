@@ -1,0 +1,51 @@
+
+
+services:
+
+
+
+
+  db_postgres:
+    container_name: db_postgres
+    hostname: db_postgres
+    image: postgres:latest
+    restart: always
+    environment:
+      POSTGRES_DB: ${POSTGRES_DATABASE}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - ${MNT_PATH}:/var/lib/postgresql/data
+    networks:
+      - candidate_gpt
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d ${POSTGRES_DATABASE} -U ${POSTGRES_USER}"]
+      interval: 1s
+      timeout: 5s
+      retries: 10
+    ports:
+      - ${POSTGRES_PORT}:5432
+
+
+  candidategpt:
+    container_name: candidategpt
+    hostname: candidategpt
+    build: .
+    restart: always
+    volumes:
+      - ${LOG_PATH}:/logs
+    env_file: stack.env
+    depends_on:
+      - db_postgres
+    ports:
+      - ${APP_PORT}
+    networks:
+      - candidate_gpt
+      - cloud-net
+
+networks:
+  candidate_gpt:
+  cloud-net:
+    external:
+      true
+
