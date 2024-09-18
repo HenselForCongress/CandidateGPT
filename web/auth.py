@@ -32,8 +32,8 @@ limiter = Limiter(key_func=get_remote_address)
 # Password strength validation function
 def is_strong_password(password):
     logger.debug("Validating password strength.")
-    # Password must be at least 42 characters long, contain uppercase, lowercase, digit, and special character
-    if (len(password) < 42 or
+    # Password must be at least 21 characters long, contain uppercase, lowercase, digit, and special character
+    if (len(password) < 21 or
         not re.search(r'[A-Z]', password) or
         not re.search(r'[a-z]', password) or
         not re.search(r'\d', password) or
@@ -112,7 +112,7 @@ def setup_admin():
         logger.debug(f"Form submitted with email: {email}")
 
         if not is_strong_password(password):
-            flash('Password must be at least 42 characters long and include uppercase, lowercase, number, and special character.', 'danger')
+            flash('Password must be at least 21 characters long and include uppercase, lowercase, number, and special character.', 'danger')
             logger.warning("Password did not meet strength requirements.")
             return render_template('auth/setup_admin.html', form=form)
 
@@ -197,7 +197,7 @@ def reset_password(token):
         # Ensure that the password strength check is passed
         if not is_strong_password(password):
             logger.warning(f"Weak password attempt during reset for user {email}.")
-            flash('Password must be at least 42 characters long and include uppercase, lowercase, number, and special character.', 'danger')
+            flash('Password must be at least 21 characters long and include uppercase, lowercase, number, and special character.', 'danger')
             return render_template('auth/reset_password.html', form=form)
 
         # Update the user's password
