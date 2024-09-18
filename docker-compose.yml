@@ -43,6 +43,31 @@ services:
       - cloud-net
     command: ["/entrypoint.sh", "python3", "-m", "run"]
 
+# https://langfuse.com/docs/deployment/self-host
+  langfuse:
+    container_name: langfuse
+    hostname: langfuse
+    image: langfuse/langfuse:latest
+    restart: always
+    environment:
+      DATABASE_HOST: ${POSTGRES_HOST}
+      DATABASE_USERNAME: ${POSTGRES_USER}
+      DATABASE_PASSWORD:  ${POSTGRES_PASSWORD}
+      DATABASE_NAME: langfuse
+      NEXTAUTH_URL: ${NEXTAUTH_URL}
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+      PORT: ${LANGFUSE_PORT}
+      SMTP_CONNECTION_URL: ${SMTP_CONNECTION_URL}
+      EMAIL_FROM_ADDRESS: ${SMTP_SENDER_EMAIL}
+      LANGFUSE_LOG_LEVEL: ${LOG_LEVEL}
+      LANGFUSE_INIT_USER_EMAIL: ${LANGFUSE_INIT_USER_EMAIL}
+
+
+
+
+
+
 networks:
   datasystems:
     external: true
