@@ -1,5 +1,5 @@
 # web/app.py
-from flask import Blueprint, render_template
+from flask import Blueprint, render_template, request
 from mastermind.utils import logger
 
 web_bp = Blueprint('web_bp', __name__)
@@ -35,3 +35,12 @@ def page_not_found(e):
 def page_not_found(e):
     logger.warning(f"403 Error: {e}")
     return render_template('403.html'), 403
+
+# Debug Route
+@web_bp.route('/debug')
+def debug():
+    return {
+        "scheme": request.scheme,
+        "x_forwarded_proto": request.headers.get('X-Forwarded-Proto'),
+        "x_forwarded_host": request.headers.get('X-Forwarded-Host'),
+    }
