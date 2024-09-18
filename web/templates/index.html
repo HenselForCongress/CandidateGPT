@@ -4,6 +4,19 @@
 
 {% block content %}
 <div class="content-container">
+    <!-- Important Notice Section -->
+    <section class="usa-section usa-alert usa-alert--info">
+        <div class="usa-alert__body">
+            <h3 class="usa-alert__heading">Important Notice</h3>
+            <p class="usa-alert__text">
+                You need an account to run a query. Please <strong>register</strong> first, then email team@henselforcongress.com to activate it.<br><br>
+                We'll lift this requirement once we have better security in place to prevent abuse. If you'd like to help improve the system, you can <a href="https://github.com/HenselForCongress/CandidateGPT/issues" target="_blank">contribute here</a>.
+            </p><br><br>
+            <a href="{{ url_for('auth.register') }}" class="usa-button">Register Here</a>
+        </div>
+    </section>
+
+    <!-- Instructions Section -->
     <section class="usa-section">
         <h3 class="section-title">Instructions</h3>
         <p>Welcome to CandidateGPT! This tool allows you to ask questions about Don Beyer and receive AI-generated responses based on the information it has been trained on. Follow these steps to use the app:</p>
@@ -16,13 +29,14 @@
         </ol>
         <p><strong>Note:</strong> The AI provides responses based on its programming and available data. The information it provides should be used for informational purposes only and may not always reflect the most current or accurate details about Don Beyer.</p>
 
-    <p>Please contact team@henselforcongress.com with any questions or concerns.</p>
+        <p>Please contact team@henselforcongress.com with any questions or concerns.</p>
     </section>
 
+    <!-- Query Form Section -->
     <h2 class="usa-heading">Ask Don Beyer a Question</h2>
 
     <form id="questionForm" class="usa-form">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"> <!-- Hidden CSRF token -->
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"> <!-- Hidden CSRF token -->
         <div class="form-container">
             <div class="question-input">
                 <label for="questionInput" class="usa-label">Your Question:</label>
