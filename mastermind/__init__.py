@@ -1,7 +1,5 @@
 # mastermind/__init__.py
 import os
-import sys
-import subprocess
 from datetime import timedelta
 from flask import Flask
 from flask_login import LoginManager
@@ -9,10 +7,11 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 import sentry_sdk
 from flask_wtf.csrf import CSRFProtect
-from flask_migrate import Migrate, upgrade
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy_utils import database_exists, create_database
+from sqlalchemy import text
 from werkzeug.middleware.proxy_fix import ProxyFix
+import psycopg2
 
 # Imported modules from your project
 from web.auth import auth_bp, login_manager, limiter
@@ -23,34 +22,21 @@ from .backend import api_bp
 from web.app import web_bp
 from web.admin import admin_bp
 
-
-def apply_migrations():
-    """Run Alembic migrations using subprocess."""
+def test_db_connection():
+    """Test the database connection."""
     try:
-        logger.info("Applying database migrations using Alembic command...")
-
-        result = subprocess.run(
-            ["alembic", "upgrade", "head"],
-            check=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            timeout=300  # Timeout after 5 minutes
+        conn = psycopg2.connect(
+            dbname=os.getenv('POSTGRES_DATABASE'),
+            user=os.getenv('POSTGRES_USER'),
+            password=os.getenv('POSTGRES_PASSWORD'),
+            host=os.getenv('POSTGRES_HOST'),
+            port=os.getenv('POSTGRES_PORT'),
         )
-
-        logger.info(f"Alembic output:\n{result.stdout.decode()}")
-        logger.info("Database migrations applied successfully.")
-    except subprocess.TimeoutExpired as e:
-        logger.error(f"Alembic command timed out: {str(e)}", exc_info=True)
-        raise
-    except subprocess.CalledProcessError as e:
-        logger.error(f"Alembic command failed with non-zero exit status.")
-        logger.error(f"Alembic stdout:\n{e.stdout.decode() if e.stdout else 'No stdout available'}")
-        logger.error(f"Alembic stderr:\n{e.stderr.decode() if e.stderr else 'No stderr available'}", exc_info=True)
-        raise
+        conn.close()
+        logger.info("Database connection successful.")
     except Exception as e:
-        logger.error(f"Unexpected error during alembic migration: {str(e)}", exc_info=True)
+        logger.error(f"Error connecting to the database: {str(e)}", exc_info=True)
         raise
-
 
 def begin_era():
     """Create and configure an instance of the Flask application."""
@@ -74,7 +60,7 @@ def begin_era():
         username = os.getenv('POSTGRES_USER')
         password = os.getenv('POSTGRES_PASSWORD')
         host = os.getenv('POSTGRES_HOST')
-        port = 5432
+        port = os.getenv('POSTGRES_PORT')
         database = os.getenv('POSTGRES_DATABASE')
         app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql://{username}:{password}@{host}:{port}/{database}'
         logger.info(f"Database URI configured: {app.config['SQLALCHEMY_DATABASE_URI']}")
@@ -126,9 +112,9 @@ def begin_era():
         # Initialize database and migration with app
         db.init_app(app)
         migrate.init_app(app, db)
-        logger.info("Database and migrations initialized with Flask app.")
+        logger.info("Database initialized with Flask app.")
     except Exception as e:
-        logger.error(f"Error initializing database/migrations with app: {str(e)}", exc_info=True)
+        logger.error(f"Error initializing database with app: {str(e)}", exc_info=True)
         raise
 
     try:
@@ -170,13 +156,12 @@ def begin_era():
         logger.error(f"Error initializing Sentry SDK: {str(e)}", exc_info=True)
         raise
 
-    # Apply migrations unconditionally
+    # Test database connection
     try:
-        logger.info("Starting to apply migrations...")
-        with app.app_context():
-            apply_migrations()
+        logger.info("Testing database connection...")
+        test_db_connection()
     except Exception as e:
-        logger.error(f"Error applying migrations: {str(e)}", exc_info=True)
+        logger.error("Database connection test failed.", exc_info=True)
         raise
 
     return app
