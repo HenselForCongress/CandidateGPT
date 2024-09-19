@@ -1,0 +1,125 @@
+name: h4c-candidategpt
+
+services:
+  db_postgres:
+    container_name: db_postgres
+    hostname: db_postgres
+    image: postgres:latest
+    restart: always
+    environment:
+      POSTGRES_DB: ${POSTGRES_DATABASE}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - ${MNT_PATH}:/var/lib/postgresql/data
+    networks:
+      - candidategpt
+    #  - cloud-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d ${POSTGRES_DATABASE} -U ${POSTGRES_USER}"]
+      interval: 1s
+      timeout: 5s
+      retries: 10
+    ports:
+      - ${POSTGRES_PORT}:5432
+
+  candidategpt:
+    container_name: candidategpt
+    hostname: candidategpt
+    image: ghcr.io/henselforcongress/candidategpt:latest
+    restart: always
+    volumes:
+      - ${LOG_PATH}:/logs
+    environment:
+      FLASK_APP: ${FLASK_APP}
+      FLASK_ENV: ${FLASK_ENV}
+      APP_PORT: ${APP_PORT}
+      HOST: ${HOST}
+      LOG_LEVEL: ${LOG_LEVEL}
+      LOG_VERBOSE: ${LOG_VERBOSE}
+      LOG_FILES: ${LOG_FILES}
+      SENTRY_DSN: ${SENTRY_DSN}
+
+      # AI Providers
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      CLOUDFLARE_ACCOUNT_ID: ${CLOUDFLARE_ACCOUNT_ID}
+      CLOUDFLARE_AI_GATEWAY: ${CLOUDFLARE_AI_GATEWAY}
+
+      # Turnstyle Keys
+      CLOUDFLARE_TURNSTYLE_SITE_KEY: ${CLOUDFLARE_TURNSTYLE_SITE_KEY}
+      CLOUDFLARE_TURNSTYLE_SECRET_KEY: ${CLOUDFLARE_TURNSTYLE_SECRET_KEY}
+
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DATABASE: ${POSTGRES_DATABASE}
+      POSTGRES_PORT: ${POSTGRES_PORT}
+      POSTGRES_HOST: ${POSTGRES_HOST}
+
+      SECRET_KEY: ${SECRET_KEY}
+
+      SMTP_USERNAME: ${SMTP_USERNAME}
+      SMTP_PASSWORD: ${SMTP_PASSWORD}
+      SMTP_SERVER: ${SMTP_SERVER}
+      SMTP_PORT: ${SMTP_PORT}
+      SMTP_USE_TLS: ${SMTP_USE_TLS}
+      SMTP_SENDER_NAME: ${SMTP_SENDER_NAME}
+      SMTP_SENDER_EMAIL: ${SMTP_SENDER_EMAIL}
+      SMTP_REPLY_TO: ${SMTP_REPLY_TO}
+
+    depends_on:
+      db_postgres:
+        condition: service_healthy
+    ports:
+      - ${APP_PORT}:${APP_PORT}
+    networks:
+      - candidategpt
+     # - cloud-net
+    command: ["/entrypoint.sh", "python3", "-m", "run"]
+
+  langfuse:
+    container_name: langfuse
+    hostname: langfuse
+    image: langfuse/langfuse:latest
+    restart: always
+    depends_on:
+      db_postgres:
+        condition: service_healthy
+    environment:
+      SALT: ${LANGFUSE_SALT}
+      DATABASE_HOST: ${POSTGRES_HOST}
+      DATABASE_USERNAME: ${POSTGRES_USER}
+      DATABASE_PASSWORD:  ${POSTGRES_PASSWORD}
+      DATABASE_NAME: langfuse
+      NEXTAUTH_URL: ${NEXTAUTH_URL}
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+      PORT: ${LANGFUSE_PORT}
+      SMTP_CONNECTION_URL: ${SMTP_CONNECTION_URL}
+      EMAIL_FROM_ADDRESS: ${SMTP_SENDER_EMAIL}
+      LANGFUSE_LOG_LEVEL: ${LOG_LEVEL}
+      # Setup
+      LANGFUSE_INIT_ORG_ID: ${LANGFUSE_INIT_ORG_ID}
+      LANGFUSE_INIT_ORG_NAME: ${LANGFUSE_INIT_ORG_NAME}
+      LANGFUSE_INIT_PROJECT_ID: ${LANGFUSE_INIT_PROJECT_ID}
+      LANGFUSE_INIT_PROJECT_NAME: ${LANGFUSE_INIT_PROJECT_NAME}
+      LANGFUSE_INIT_PROJECT_PUBLIC_KEY: ${LANGFUSE_INIT_PROJECT_PUBLIC_KEY}
+      LANGFUSE_INIT_PROJECT_SECRET_KEY: ${LANGFUSE_INIT_PROJECT_SECRET_KEY}
+      LANGFUSE_INIT_USER_EMAIL: ${LANGFUSE_INIT_USER_EMAIL}
+      LANGFUSE_INIT_USER_NAME: ${LANGFUSE_INIT_USER_NAME}
+      LANGFUSE_INIT_USER_PASSWORD: ${LANGFUSE_INIT_USER_PASSWORD}
+    ports:
+      - ${LANGFUSE_PORT}:${LANGFUSE_PORT}
+    networks:
+      - candidategpt
+    #  - cloud-net
+
+networks:
+#  cloud-net:
+ #   external: true
+
+  candidategpt:
+    driver: bridge
+
+volumes:
+  cgpt-logs:
+  cgpt-data:

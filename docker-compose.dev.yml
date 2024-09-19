@@ -1,0 +1,29 @@
+# docker-compose.dev.yml
+# For Local Development
+# docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+
+services:
+  db_postgres:
+    volumes:
+      - cgpt-data:/var/lib/postgresql/data
+    networks:
+      - candidategpt  # Override networks to exclude cloud-net
+
+  candidategpt:
+    build: .
+    volumes:
+      - cgpt-logs:/logs
+    networks:
+      - candidategpt  # Override networks to exclude cloud-net
+
+  langfuse:
+    networks:
+      - candidategpt  # Override networks to exclude cloud-net
+
+networks:
+  candidategpt:
+    driver: bridge
+
+volumes:
+  cgpt-logs:
+  cgpt-data:

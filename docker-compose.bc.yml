@@ -1,0 +1,30 @@
+
+
+
+services:
+  db_postgres:
+    volumes:
+      - ${MNT_PATH}:/var/lib/postgresql/data
+    networks:
+      - candidategpt
+
+  candidategpt:
+    build: .
+    volumes:
+      - ${MNT_PATH}:/logs
+    networks:
+      - candidategpt
+      - cloud-net
+
+  langfuse:
+    networks:
+      - candidategpt
+      - cloud-net
+
+networks:
+  candidategpt:
+    driver: bridge
+
+  cloud-net:
+    external: true
+
