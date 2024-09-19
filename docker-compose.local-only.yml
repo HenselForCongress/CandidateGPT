@@ -1,6 +1,12 @@
 # docker-compose.local-only.yml
 # A completely independent Docker Compose setup for local-only services
 
+# docker compose -f docker-compose.local-only.yml up -d
+# docker compose --project-name local-candidategpt down -v
+
+
+name: local-candidategpt
+
 services:
   db_postgres:
     container_name: db_postgres
@@ -15,7 +21,6 @@ services:
       - cgpt-data:/var/lib/postgresql/data
     networks:
       - candidategpt
-    #  - cloud-net
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -d ${POSTGRES_DATABASE} -U ${POSTGRES_USER}"]
       interval: 1s
@@ -34,11 +39,12 @@ services:
         condition: service_healthy
     environment:
       SALT: ${LANGFUSE_SALT}
-      DATABASE_HOST: ${POSTGRES_HOST}
-      DATABASE_USERNAME: ${POSTGRES_USER}
-      DATABASE_PASSWORD:  ${POSTGRES_PASSWORD}
+      DATABASE_HOST: db_postgres
+      DATABASE_USERNAME: langfuse_app
+      DATABASE_PASSWORD:  ${LANGFUSE_POSTGRES_PASSWORD}
       DATABASE_NAME: langfuse
-      NEXTAUTH_URL: ${NEXTAUTH_URL}
+     # NEXTAUTH_URL: ${NEXTAUTH_URL}
+      NEXTAUTH_URL: http://localhost:5025
       NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
       ENCRYPTION_KEY: ${ENCRYPTION_KEY}
       PORT: ${LANGFUSE_PORT}
@@ -60,9 +66,61 @@ services:
     networks:
       - candidategpt
 
+  langflow:
+    container_name: langflow
+    hostname: langflow
+    image: langflowai/langflow:latest
+    restart: always
+    pull_policy: always
+    ports:
+      - ${LANGFLOW_PORT}:${LANGFLOW_PORT}
+    depends_on:
+      - db_postgres
+      - redis
+    volumes:
+      - cgpt-langflow:/var/lib/langflow
+    environment:
+      LANGFLOW_DATABASE_URL: postgresql://langflow_app:${LANGFLOW_POSTGRES_PASSWORD}@db_postgres:5432/langflow
+      LANGFLOW_PORT: ${LANGFLOW_PORT}
+      LANGFLOW_LOG_LEVEL: ${LOG_LEVEL}
+      #LANGFLOW_LOG_FILE: ${LOG_PATH}/langflow.logs
+      LANGFLOW_SUPERUSER: ${LANGFLOW_SUPERUSER}
+      LANGFLOW_SUPERUSER_PASSWORD: ${LANGFLOW_SUPERUSER_PASSWORD}
+      LANGFLOW_SECRET_KEY: redis
+      LANGFLOW_CACHE_TYPE: redis
+      LANGFLOW_REDIS_HOST: redis
+      LANGFLOW_REDIS_PORT: 6379
+      LANGFLOW_REDIS_DB: 0
+      LANGFLOW_REDIS_CACHE_EXPIRE: 3600
+      # Other Vars
+      LANGFLOW_STORE_ENVIRONMENT_VARIABLES: ${LANGFLOW_STORE_ENVIRONMENT_VARIABLES}
+      LANGFLOW_VARIABLES_TO_GET_FROM_ENVIRONMENT: ${LANGFLOW_VARIABLES_TO_GET_FROM_ENVIRONMENT}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      # Langfuse connection
+      LANGFLOW_LANGFUSE_HOST: http://langfuse:${LANGFUSE_PORT}
+      LANGFLOW_LANGFUSE_SECRET_KEY: ${LANGFUSE_INIT_PROJECT_SECRET_KEY}
+      LANGFLOW_LANGFUSE_PUBLIC_KEY: ${LANGFUSE_INIT_PROJECT_PUBLIC_KEY}
+    networks:
+      - candidategpt
+
+  redis:
+    image: redis:latest
+    container_name: redis
+    hostname: redis
+    volumes:
+      - cgpt-redis:/data
+    ports:
+      - 6379:6379
+    networks:
+      - candidategpt
+
+
 networks:
   candidategpt:
     driver: bridge
 
 volumes:
   cgpt-data:
+  cgpt-langflow:
+  cgpt-redis:
+
