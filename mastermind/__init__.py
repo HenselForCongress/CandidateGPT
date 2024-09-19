@@ -12,7 +12,9 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy_utils import database_exists, create_database
 from sqlalchemy import text
 from werkzeug.middleware.proxy_fix import ProxyFix
-import psycopg2
+
+from langfuse import Langfuse
+
 
 # Imported modules from your project
 from web.auth import auth_bp, login_manager, limiter
@@ -23,21 +25,7 @@ from .backend import api_bp
 from web.app import web_bp
 from web.admin import admin_bp
 
-def test_db_connection():
-    """Test the database connection."""
-    try:
-        conn = psycopg2.connect(
-            dbname=os.getenv('POSTGRES_DATABASE'),
-            user=os.getenv('POSTGRES_USER'),
-            password=os.getenv('POSTGRES_PASSWORD'),
-            host=os.getenv('POSTGRES_HOST'),
-            port=os.getenv('POSTGRES_PORT'),
-        )
-        conn.close()
-        logger.info("Database connection successful.")
-    except Exception as e:
-        logger.error(f"Error connecting to the database: {str(e)}", exc_info=True)
-        raise
+
 
 def begin_era():
     """Create and configure an instance of the Flask application."""
@@ -58,11 +46,11 @@ def begin_era():
 
     try:
         # Update database URI to use PostgreSQL
-        username = os.getenv('POSTGRES_USER')
-        password = os.getenv('POSTGRES_PASSWORD')
+        username = 'candidategpt_app'
+        password = os.getenv('CANDIDATEGPT_POSTGRES_PASSWORD')
         host = os.getenv('POSTGRES_HOST')
         port = os.getenv('POSTGRES_PORT')
-        database = os.getenv('POSTGRES_DATABASE')
+        database = 'candidategpt'
         app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql://{username}:{password}@{host}:{port}/{database}'
         logger.info(f"Database URI configured: {app.config['SQLALCHEMY_DATABASE_URI']}")
     except KeyError as e:
@@ -158,12 +146,20 @@ def begin_era():
         logger.error(f"Error initializing Sentry SDK: {str(e)}", exc_info=True)
         raise
 
-    # Test database connection
-    try:
-        logger.info("Testing database connection...")
-        test_db_connection()
-    except Exception as e:
-        logger.error("Database connection test failed.", exc_info=True)
-        raise
+    langfuse_instance = config_langfuse()
+
 
     return app
+
+def config_langfuse():
+    langfuse = Langfuse(
+        public_key=os.getenv("LANGFUSE_PUBLIC_KEY"),
+        secret_key=os.getenv("LANGFUSE_SECRET_KEY"),
+        host=os.getenv("LANGFUSE_HOST", "https://cloud.langfuse.com")
+    )
+
+    # Flush to ensure all logs are sent
+    import atexit
+    atexit.register(langfuse.flush)
+
+    return langfuse
