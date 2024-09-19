@@ -1,8 +1,6 @@
 name: h4c-candidategpt
 
 services:
-# This is ROUGH and mostly for my servers, I'll have a better one later... or  feel free to submit a pr :)
-
   db_postgres:
     container_name: db_postgres
     hostname: db_postgres
@@ -13,10 +11,10 @@ services:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
-     # - ${MNT_PATH}:/var/lib/postgresql/data
-     - cgpt-data:/var/lib/postgresql/data
+      - ${MNT_PATH}:/var/lib/postgresql/data
     networks:
       - candidategpt
+      - cloud-net
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -d ${POSTGRES_DATABASE} -U ${POSTGRES_USER}"]
       interval: 1s
@@ -28,16 +26,11 @@ services:
   candidategpt:
     container_name: candidategpt
     hostname: candidategpt
-    #image: ghcr.io/henselforcongress/candidategpt:latest
-    build: .
+    image: ghcr.io/henselforcongress/candidategpt:latest
     restart: always
     volumes:
-      #- ${LOG_PATH}:/logs
-      - cgpt-logs:/logs
-    #env_file: .env
+      - ${LOG_PATH}:/logs
     environment:
-      MNT_PATH: ${MNT_PATH}
-      LOG_PATH: ${LOG_PATH}
       FLASK_APP: ${FLASK_APP}
       FLASK_ENV: ${FLASK_ENV}
       APP_PORT: ${APP_PORT}
@@ -80,10 +73,9 @@ services:
       - ${APP_PORT}:${APP_PORT}
     networks:
       - candidategpt
-    #  - cloud-net
+     # - cloud-net
     command: ["/entrypoint.sh", "python3", "-m", "run"]
 
-# https://langfuse.com/docs/deployment/self-host
   langfuse:
     container_name: langfuse
     hostname: langfuse
@@ -118,21 +110,14 @@ services:
     ports:
       - ${LANGFUSE_PORT}:${LANGFUSE_PORT}
     networks:
-     # - cloud-net
       - candidategpt
-
-
+      - cloud-net
 
 networks:
- # cloud-net:
-  #  external: true
+  cloud-net:
+    external: true
 
   candidategpt:
     driver: bridge
-
-volumes:
-  cgpt-logs:
-  cgpt-data:
-
 
 

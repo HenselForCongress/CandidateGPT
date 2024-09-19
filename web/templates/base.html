@@ -9,6 +9,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/uswds/2.12.1/css/uswds.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 
+
+
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-NP0XBDML85"></script>
     <script>
@@ -48,6 +50,24 @@
           return event;
         }
       });
+
+     // Attach the feedback form to the "Report a Bug" button
+     document.addEventListener("DOMContentLoaded", function() {
+       const feedbackIntegration = Sentry.feedbackIntegration({
+         colorScheme: "system",
+         enableScreenshot: true
+       });
+
+       // Make sure the button exists before attaching the feedback form
+       const reportBugButton = document.querySelector("#report-bug-button");
+       if (reportBugButton) {
+         feedbackIntegration.attachTo(reportBugButton, {
+           formTitle: "Report a Bug!"
+         });
+       } else {
+         console.error("Report a Bug button not found.");
+       }
+     });
     </script>
     <!-- End Sentry User Feedback -->
 

@@ -4,10 +4,24 @@
 
 {% block content %}
 <div class="content-container">
-    {% if current_user.is_authenticated %}
-        <!-- Redirect authenticated users to the chat page -->
 
-    {% else %}
+    <!-- Chat button at the top if the user is authenticated -->
+    {% if current_user.is_authenticated %}
+        <div class="top-navigation">
+            <!-- Add a container for the note and button -->
+            <div class="centered-container">
+                <!-- Message about being logged in -->
+                <p class="logged-in-note">You are logged in and can now interact with the AI model.</p>
+
+                <!-- Centered Chat button -->
+                <a href="{{ url_for('web_bp.chat') }}" class="usa-button usa-button--primary">Chat</a>
+
+            </div>
+        </div>
+    {% endif %}
+
+    <!-- Main content section -->
+
         <!-- Generic AI Power Section for non-logged-in users -->
         <section class="usa-section usa-section--primary">
             <h2 class="usa-section__heading">The Power of AI in Today's World</h2>
@@ -20,6 +34,22 @@
                 <li><strong>Innovation:</strong> We are committed to using innovative technologies to improve governance and enhance democratic engagement.</li>
             </ul>
             <p>To learn more, please contact team@henselforcongress.com.</p>
+        </section>
+
+        {% if current_user.is_authenticated %}
+
+        {% else %}
+
+        <!-- Important Notice Section -->
+        <section class="usa-section usa-alert usa-alert--info">
+            <div class="usa-alert__body">
+                <h3 class="usa-alert__heading">Important Notice</h3>
+                <p class="usa-alert__text">
+                    You need an account to run a query. Please <strong>register</strong> first, then email team@henselforcongress.com to activate it.<br><br>
+                    We'll lift this requirement once we have better security in place to prevent abuse. If you'd like to help improve the system, you can <a href="https://github.com/HenselForCongress/CandidateGPT/issues" target="_blank">contribute here</a>.
+                </p><br><br>
+                <a href="{{ url_for('auth.register') }}" class="usa-button">Register Here</a>
+            </div>
         </section>
 
         <!-- Buttons for Create Account and Login -->

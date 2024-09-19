@@ -185,6 +185,7 @@ button {
     cursor: pointer;
 }
 
+
 button:hover {
     background-color: var(--link-hover-color);
 }
@@ -380,4 +381,31 @@ button:hover {
     max-width: 400px;
     display: block;
     margin: 20px auto;
+}
+
+
+
+/* Centering the container, message, and button */
+.centered-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Centers content horizontally */
+    justify-content: center; /* Centers content vertically */
+    margin-top: 20px; /* Optional: Adjust spacing above */
+}
+
+.logged-in-note {
+    margin-bottom: 10px; /* Space between the note and the button */
+    text-align: center; /* Center text within the paragraph */
+}
+
+
+
+/* Limit the width of the "Report a Bug" button and center it */
+.report-bug-button {
+    display: inline-block; /* Inline-block to control the width */
+    width: auto; /* Adjust the width to fit the text content */
+    padding: 10px 20px; /* Add padding for better look */
+    margin: 0 auto; /* Center the button horizontally */
+    cursor: pointer; /* Add a pointer cursor on hover */
 }
