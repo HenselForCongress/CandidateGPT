@@ -13,8 +13,7 @@ services:
     volumes:
       - ${MNT_PATH}:/var/lib/postgresql/data
     networks:
-      - candidategpt
-      - cloud-net
+      - hensel-for-congress
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -d ${POSTGRES_DATABASE} -U ${POSTGRES_USER}"]
       interval: 1s
@@ -72,8 +71,7 @@ services:
     ports:
       - ${APP_PORT}:${APP_PORT}
     networks:
-      - candidategpt
-     # - cloud-net
+      - hensel-for-congress
     command: ["/entrypoint.sh", "python3", "-m", "run"]
 
   langfuse:
@@ -110,14 +108,10 @@ services:
     ports:
       - ${LANGFUSE_PORT}:${LANGFUSE_PORT}
     networks:
-      - candidategpt
-      - cloud-net
+      - hensel-for-congress
 
 networks:
-  cloud-net:
+  hensel-for-congress:
     external: true
-
-  candidategpt:
-    driver: bridge
 
 
