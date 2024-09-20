@@ -147,29 +147,29 @@ def generate_response(question, data, config):
     # Prepare data
     full_prompt = prepare_full_prompt(data, config, question)
 
-    # Log the query
-    query_record = log_query(question, config)
-
     try:
         # Execute the OpenAI API call
         response = send_openai_request(full_prompt, config)
 
         # Process the response and log results
         result = process_response(response)
+
         if response.status_code == 200:
             log_token_usage(response.json().get('usage', {}), config, full_prompt)
-            save_response_to_db(result['answer'], query_record)
+            # Note: We will only return in this function, commit in the main route to avoid duplicate commits
             logger.info(f"Response generated successfully for question: {question}")
         else:
             logger.error(f"Failed API response: {response.status_code}")
+
     except Exception as e:
         logger.exception("Error during response generation")
+        db.session.rollback()
         result = {
             'answer': f"Exception: {str(e)}",
             'warning': '',
             'links': []
         }
-        db.session.rollback()
+
     return result
 
 
