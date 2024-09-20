@@ -73,13 +73,6 @@ create_db_and_user "candidategpt" "candidategpt_app" "$CANDIDATEGPT_POSTGRES_PAS
 echo "Running database migrations..."
 poetry run alembic upgrade head
 
-# Start the application
-echo "Starting the application..."
-exec "$@"
-
-# Run database migrations
-echo "Running database migrations..."
-poetry run alembic upgrade head
 
 # Start the application
 echo "Starting the application..."
