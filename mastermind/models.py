@@ -139,7 +139,6 @@ class QuerySchema(Schema):
     created_at = fields.DateTime()
     updated_at = fields.DateTime()
 
-# Modify Query Definition
 class Query(db.Model):
     """Query model for storing user queries and their responses."""
     __tablename__ = 'queries'
@@ -147,11 +146,10 @@ class Query(db.Model):
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True, comment="Auto incrementing primary key")
     query_text = db.Column(db.Text, nullable=False, comment="Text of the query made by the user")
-    response_text = db.Column(db.Text, nullable=False, comment="Text of the response received")
     response_id = db.Column(db.Integer, db.ForeignKey('logs.responses.id', ondelete='CASCADE'), nullable=True, comment="ID of the response received")
     response_type_id = db.Column(db.Integer, db.ForeignKey('meta.response_types.id', ondelete='SET NULL'), nullable=True, comment="Foreign key to the response type")
     settings_selected = db.Column(db.String(255), nullable=True, comment="Settings used when making the query")
-    timestamp = db.Column(db.DateTime, default=datetime.utcnow, comment="Time when query was made")
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow, comment="Time when the query was made")
     ip_address = db.Column(db.String(45), nullable=True, comment="IP address from which the query was made")
     user_id = db.Column(UUID(as_uuid=True), db.ForeignKey('entities.users.user_id', ondelete='CASCADE'), nullable=False, comment="ID of the user who made the query")
     showcase = db.Column(db.Boolean, default=False, nullable=False, comment="Indicates whether the query is marked for showcase")
