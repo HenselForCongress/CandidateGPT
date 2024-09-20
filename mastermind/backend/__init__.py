@@ -52,8 +52,22 @@ def ask_question():
         response_type = request.json.get('response_type')
         showcase = request.json.get('showcase', False)
 
-        # Get the User-ID from the logged-in user
-        user_id = current_user.get_id() if current_user.is_authenticated else 'anonymous'
+        # Get the User-ID (email) from the headers
+        user_email = request.headers.get('User-ID')
+        if not user_email:
+            user_email = 'anonymous'  # Fallback if no user id
+
+        # Retrieve user based on email to get the user_id
+        user = User.query.filter_by(email=user_email).first()
+        if not user:
+            raise ValueError(f"User not found for email: {user_email}")
+
+        user_id = user.user_id  # UUID type
+
+        # Log extracted values
+        logger.debug(f"Extracted question: {user_question}")
+        logger.debug(f"Extracted response_type: {response_type}")
+        logger.debug(f"User-ID: {user_id}")
 
         response_option = next((option for option in config['options']['response'] if option['name'] == response_type), None)
         response_prompt = response_option['prompt'] if response_option else ""
@@ -97,7 +111,7 @@ def ask_question():
         db.session.commit()
 
         langfuse_context.update_current_observation(
-            user_id=user_id,
+            user_id=user_email,
             input={"question": user_question, "response_type": response_type},
             output={
                 "answer": response_text,
