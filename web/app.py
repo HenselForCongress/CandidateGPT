@@ -3,6 +3,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, jsonif
 from mastermind.utils import logger
 from flask_login import current_user, login_required
 from mastermind.models import Query, db
+from sqlalchemy.sql import func
 
 
 web_bp = Blueprint('web_bp', __name__)
@@ -54,6 +55,21 @@ def get_metrics():
         return jsonify(data)
     except Exception as e:
         logger.error(f"Error retrieving metrics and recent queries: {e}")
+        return jsonify({"error": "Failed to retrieve data"}), 500
+
+@web_bp.route('/random_showcase')
+def random_showcase():
+    """Get random showcased queries."""
+    try:
+        showcased_queries = Query.query.filter_by(showcase=True).order_by(func.random()).limit(5).all()
+
+        data = {
+            "showcased_queries": [query.serialize() for query in showcased_queries]
+        }
+
+        return jsonify(data)
+    except Exception as e:
+        logger.error(f"Error retrieving showcased queries: {e}")
         return jsonify({"error": "Failed to retrieve data"}), 500
 
 # Error handler for 404
