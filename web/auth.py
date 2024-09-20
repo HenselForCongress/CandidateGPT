@@ -1,21 +1,30 @@
 # web/auth.py
+import re
+from datetime import datetime, timedelta
+import string
+import secrets
+from werkzeug.security import generate_password_hash, check_password_hash
+from functools import wraps
+from wtforms import StringField, PasswordField
+from wtforms.validators import DataRequired, Email
+from langfuse.decorators import langfuse_context, observe
+
+# Flask
 from flask import Blueprint, render_template, redirect, url_for, flash, request, abort, current_app
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
+from flask_wtf import FlaskForm
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+
+
+# App Imports
 from mastermind.models import db, User, UserType, UserTypeEnum, Organization
+
 from mastermind.utils.email import send_email
 from mastermind.utils.token_utils import generate_token, confirm_token
 from mastermind.utils.logging import logger
-from werkzeug.security import generate_password_hash, check_password_hash
-from functools import wraps
-import re
-from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField
-from wtforms.validators import DataRequired, Email
-from flask_limiter import Limiter
-from flask_limiter.util import get_remote_address
-from datetime import timedelta
-import string
-import secrets
+
+
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
 
@@ -62,6 +71,7 @@ class ResetPasswordForm(FlaskForm):
 # Login route
 @auth_bp.route('/login', methods=['GET', 'POST'])
 @limiter.limit("5 per minute")
+@observe(name="login_attempt")
 def login():
     user_count = User.query.count()
     logger.debug(f"Number of users in the system: {user_count}")
@@ -86,6 +96,18 @@ def login():
             login_user(user)
             logger.info(f"User {user.email} logged in from IP {request.remote_addr}.")
             flash('Logged in successfully!', 'success')
+
+            langfuse_context.update_current_observation(
+                user_id=f"{current_user.email}",
+                input={'email': form.email.data},
+                output={'status': 'login_successful'},
+                name="login_attempt",
+                metadata={"ip_address": request.remote_addr},
+                tags=['authentication'],
+                public=True
+            )
+
+
             return redirect(url_for('web_bp.index'))
         else:
             logger.warning(f"Failed login attempt for email: {email} from IP {request.remote_addr}")
@@ -96,6 +118,7 @@ def login():
 # Setup Admin route
 
 @auth_bp.route('/setup-admin', methods=['GET', 'POST'])
+@observe(name="setup_admin")
 def setup_admin():
     logger.debug("Accessed setup_admin route.")
     # Check if users already exist
@@ -149,6 +172,7 @@ def setup_admin():
 
 # Logout route
 @auth_bp.route('/logout')
+@observe(name="user_logout")
 @login_required
 def logout():
     logger.info(f"User {current_user.email} logged out from IP {request.remote_addr}.")
@@ -160,6 +184,7 @@ def logout():
 # Password Reset Request Route
 @auth_bp.route('/password-reset', methods=['GET', 'POST'])
 @limiter.limit("3 per minute")
+@observe(name="password_reset_request")
 def password_reset_request():
     form = PasswordResetRequestForm()
     if form.validate_on_submit():
@@ -182,6 +207,7 @@ def password_reset_request():
 
 # Password Reset Route
 @auth_bp.route('/reset/<token>', methods=['GET', 'POST'])
+@observe(name="reset_password")
 def reset_password(token):
     email = confirm_token(token, salt='password-reset')
     if not email:
@@ -224,6 +250,7 @@ def reset_password(token):
 
 
 @auth_bp.route('/register', methods=['GET', 'POST'])
+@observe(name="user_registration")
 def register():
     form = RegistrationForm()
     if form.validate_on_submit():
@@ -280,6 +307,7 @@ def register():
 
 @auth_bp.route('/profile', methods=['GET', 'POST'])
 @login_required
+@observe(name="user_profile_update")
 def profile():
     if request.method == 'POST':
         given_name = request.form.get('given_name')
@@ -333,3 +361,4 @@ def generate_secure_password(length=75):
     characters = string.ascii_letters + string.digits + string.punctuation
     secure_password = ''.join(secrets.choice(characters) for i in range(length))
     return secure_password
+
