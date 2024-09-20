@@ -103,7 +103,7 @@ def login():
                 output={'status': 'login_successful'},
                 name="login_attempt",
                 metadata={"ip_address": request.remote_addr},
-                tags=['authentication'],
+                tags=['authentication', 'login'],
                 public=True
             )
 
@@ -116,7 +116,6 @@ def login():
     return render_template('auth/login.html', form=form)
 
 # Setup Admin route
-
 @auth_bp.route('/setup-admin', methods=['GET', 'POST'])
 @observe(name="setup_admin")
 def setup_admin():
@@ -176,6 +175,17 @@ def setup_admin():
 @login_required
 def logout():
     logger.info(f"User {current_user.email} logged out from IP {request.remote_addr}.")
+
+    # Langfuse observation for user logout
+    langfuse_context.update_current_observation(
+        user_id=f"{current_user.email}",
+        output={'status': 'logout_successful'},
+        name="user_logout",
+        metadata={"ip_address": request.remote_addr},
+        tags=['authentication', 'logout'],
+        public=True
+    )
+
     logout_user()
     flash('You have been logged out.', 'info')
     return redirect(url_for('auth.login'))
@@ -212,6 +222,17 @@ def reset_password(token):
     email = confirm_token(token, salt='password-reset')
     if not email:
         logger.error("💔 Invalid or expired password reset link.")
+
+        # Langfuse observation for invalid or expired reset token
+        langfuse_context.update_current_observation(
+            input={"token": token},
+            output={"status": "invalid_token"},
+            name="reset_password_attempt",
+            metadata={"error": "Invalid or expired token", "ip_address": request.remote_addr},
+            tags=["password_reset", "error"],
+            public=True
+        )
+
         flash('The password reset link is invalid or has expired.', 'danger')
         return redirect(url_for('auth.password_reset_request'))
 
@@ -225,27 +246,69 @@ def reset_password(token):
         # Ensure that the password strength check is passed
         if not is_strong_password(password):
             logger.warning(f"Weak password attempt during reset for user {email}.")
+
+            # Langfuse observation for weak password attempt
+            langfuse_context.update_current_observation(
+                user_id=email,
+                input={"password": "REDACTED"},
+                output={"status": "weak_password"},
+                name="password_reset_attempt",
+                metadata={"ip_address": request.remote_addr},
+                tags=["password_reset", "weak_password", "security"],
+                public=False  # Password-related observations should be private
+            )
+
             flash('Password must be at least 21 characters long and include uppercase, lowercase, number, and special character.', 'danger')
             return render_template('auth/reset_password.html', form=form)
 
         # Update the user's password
         try:
-            # Set the new password
             user.set_password(password)
             logger.debug(f"Password hashed and set for user {email}: {user.password_hash}")
-            # Commit the change to the database
             db.session.commit()
             logger.info(f"Password updated for user {user.email} from IP {request.remote_addr}.")
+
+            # Langfuse observation for successful password reset
+            langfuse_context.update_current_observation(
+                user_id=email,
+                input={"password": "REDACTED"},
+                output={"status": "password_reset_success"},
+                name="password_reset",
+                metadata={"ip_address": request.remote_addr},
+                tags=["password_reset", "success"],
+                public=False
+            )
+
             flash('Your password has been updated!', 'success')
-            return redirect(url_for('auth.login'))  # Redirect to the login page
+            return redirect(url_for('auth.login'))
         except Exception as e:
-            # Rollback in case of error
             db.session.rollback()
             logger.error(f"Error updating password for user {email}: {e}")
+
+            # Langfuse observation for password reset error
+            langfuse_context.update_current_observation(
+                user_id=email,
+                input={"password": "REDACTED"},
+                output={"status": "reset_failed"},
+                name="password_reset_error",
+                metadata={"error": str(e), "ip_address": request.remote_addr},
+                tags=["password_reset", "error"],
+                public=False
+            )
+
             flash('An error occurred while updating your password.', 'danger')
 
-    # Add debug log for rendering the form when it's not submitted or validation fails
     logger.debug(f"Rendering password reset form for user {email}.")
+
+    # Langfuse observation for rendering password reset form
+    langfuse_context.update_current_observation(
+        user_id=email,
+        name="render_reset_password_form",
+        metadata={"ip_address": request.remote_addr},
+        tags=["password_reset", "form_render"],
+        public=True
+    )
+
     return render_template('auth/reset_password.html', form=form)
 
 
@@ -339,10 +402,47 @@ def profile():
         try:
             db.session.commit()
             flash('Profile updated successfully.', 'success')
+
+            # Langfuse observation for successful profile update
+            langfuse_context.update_current_observation(
+                user_id=current_user.email,
+                input={
+                    "given_name": given_name,
+                    "family_name": family_name,
+                    "preferred_name": preferred_name,
+                    "organization": organization_name,
+                    "notes": notes
+                },
+                output={"status": "profile_update_success"},
+                name="user_profile_update",
+                metadata={"ip_address": request.remote_addr},
+                tags=["profile_update", "success"],
+                public=True
+            )
+
         except Exception as e:
             db.session.rollback()
             logger.error(f"Error updating profile: {e}")
+
+            # Langfuse observation for profile update error
+            langfuse_context.update_current_observation(
+                user_id=current_user.email,
+                input={
+                    "given_name": given_name,
+                    "family_name": family_name,
+                    "preferred_name": preferred_name,
+                    "organization": organization_name,
+                    "notes": notes
+                },
+                output={"status": "profile_update_failed"},
+                name="user_profile_update_error",
+                metadata={"ip_address": request.remote_addr, "error": str(e)},
+                tags=["profile_update", "error"],
+                public=False  # Errors might be sensitive, so keep private
+            )
+
             flash('An error occurred while updating your profile.', 'danger')
+
 
     return render_template('auth/profile.html', user=current_user)
 
