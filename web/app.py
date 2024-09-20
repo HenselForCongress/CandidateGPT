@@ -3,6 +3,8 @@ from flask import Blueprint, render_template, request, redirect, url_for
 from mastermind.utils import logger
 from flask_login import current_user, login_required
 
+
+
 web_bp = Blueprint('web_bp', __name__)
 
 @web_bp.route('/')

@@ -7,13 +7,13 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 import sentry_sdk
 from sentry_sdk.integrations.flask import FlaskIntegration
-from flask_wtf.csrf import CSRFProtect
+from flask_wtf import CSRFProtect
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy_utils import database_exists, create_database
 from sqlalchemy import text
 from werkzeug.middleware.proxy_fix import ProxyFix
-
 from langfuse import Langfuse
+import atexit
 
 
 # Imported modules from your project
@@ -24,6 +24,25 @@ from web.admin import csrf
 from .backend import api_bp
 from web.app import web_bp
 from web.admin import admin_bp
+
+
+
+# Define langfuse configuration
+def config_langfuse():
+    langfuse_instance = Langfuse(
+        public_key=os.getenv("LANGFUSE_PUBLIC_KEY"),
+        secret_key=os.getenv("LANGFUSE_SECRET_KEY"),
+        host=os.getenv("LANGFUSE_HOST", "https://langfuse.henselforcongress.com"),
+        debug=os.getenv("LANGFUSE_DEBUG", False)
+    )
+
+    # Ensure all logs are flushed at exit
+    atexit.register(langfuse_instance.flush)
+
+    return langfuse_instance
+
+# Initialize langfuse globally (without user-specific setup)
+langfuse_instance = config_langfuse()
 
 
 
@@ -146,20 +165,8 @@ def begin_era():
         logger.error(f"Error initializing Sentry SDK: {str(e)}", exc_info=True)
         raise
 
-    langfuse_instance = config_langfuse()
+
+
 
 
     return app
-
-def config_langfuse():
-    langfuse = Langfuse(
-        public_key=os.getenv("LANGFUSE_PUBLIC_KEY"),
-        secret_key=os.getenv("LANGFUSE_SECRET_KEY"),
-        host=os.getenv("LANGFUSE_HOST", "https://cloud.langfuse.com")
-    )
-
-    # Flush to ensure all logs are sent
-    import atexit
-    atexit.register(langfuse.flush)
-
-    return langfuse
