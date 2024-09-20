@@ -186,6 +186,8 @@ def edit_user(user_id):
     user = User.query.get_or_404(user_id)
     if request.method == 'POST':
         try:
+            previous_user_type = user.user_type.name  # Store previous user type
+
             user.given_name = request.form.get('given_name')
             user.email = request.form.get('email')
             user.family_name = request.form.get('family_name')
@@ -214,6 +216,17 @@ def edit_user(user_id):
             user.user_type = user_type
 
             db.session.commit()
+
+            # Send welcome email if user is upgraded from VIEWER to USER
+            if previous_user_type == UserTypeEnum.VIEWER and user.user_type.name == UserTypeEnum.USER:
+                send_email(
+                    subject='Welcome to CandidateGPT!',
+                    recipient=user.email,
+                    template='email/chat_enabled.html',
+                    user=user
+                )
+                # I should make this a template that shows the new user permissions possible. do it when any user type is changed and tehn send a list of the differences and new perms they have.
+
             flash('User updated successfully.', 'success')
             logger.info(f"User {user.email} updated successfully.")
             return redirect(url_for('admin.list_users'))

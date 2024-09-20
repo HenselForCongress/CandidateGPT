@@ -356,13 +356,29 @@ def register():
                 send_email(
                     subject='Welcome to CandidateGPT - Set Your Password',
                     recipient=new_user.email,
-                    template='email/invitation.html',  # Use your appropriate email template
+                    template='email/invitation.html',
                     token=token
                 )
                 logger.info(f"Welcome email sent to {new_user.email}.")
             except Exception as e:
                 logger.error(f"Error sending welcome email to {new_user.email}: {e}")
                 flash('Registration successful, but the welcome email could not be sent.', 'danger')
+
+            # Send alert to all admins
+            try:
+                logger.debug("Sending new user alert to all admins.")
+                admin_users = User.query.join(UserType).filter(UserType.name == UserTypeEnum.ADMIN).all()
+                for admin in admin_users:
+                    send_email(
+                        subject='New User Registered',
+                        recipient=admin.email,
+                        template='email/new_user_alert.html',
+                        user=new_user
+                    )
+                logger.info("New user alert sent to all admins.")
+            except Exception as e:
+                logger.error(f"Error sending new user alert emails to admins: {e}")
+                flash('User was added, but the admin alerts could not be sent.', 'danger')
 
             flash('Registration successful. Please check your email to set your password.', 'success')
             return redirect(url_for('auth.login'))
