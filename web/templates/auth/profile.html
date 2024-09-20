@@ -1,31 +1,56 @@
 <!-- web/templates/auth/profile.html -->
 {% extends 'base.html' %}
 
-{% block title %}Register{% endblock %}
+{% block title %}Profile{% endblock %}
 
 {% block content %}
 <section class="usa-section">
-  <h2 class="usa-heading">Profile</h2>
+    <h2 class="usa-heading">Profile</h2>
 
-  <form method="POST" class="usa-form">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"> <!-- Hidden CSRF token -->
-      <label for="given_name" class="usa-label">Given Name (required):</label>
-      <input type="text" name="given_name" class="usa-input" value="{{ user.given_name }}" required>
+    <form method="POST" class="usa-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"> <!-- Hidden CSRF token -->
+        <label for="given_name" class="usa-label">Given Name (required):</label>
+        <input type="text" name="given_name" class="usa-input" value="{{ user.given_name }}" required>
 
-      <label for="family_name" class="usa-label">Family Name (if applicable):</label>
-      <input type="text" name="family_name" class="usa-input" value="{{ user.family_name }}">
+        <label for="family_name" class="usa-label">Family Name (if applicable):</label>
+        <input type="text" name="family_name" class="usa-input" value="{{ user.family_name }}">
 
-      <label for="preferred_name" class="usa-label">Preferred Name:</label>
-      <input type="text" name="preferred_name" class="usa-input" value="{{ user.preferred_name }}">
+        <label for="preferred_name" class="usa-label">Preferred Name:</label>
+        <input type="text" name="preferred_name" class="usa-input" value="{{ user.preferred_name }}">
 
-      <label for="organization" class="usa-label">Organization:</label>
-      <input type="text" name="organization" class="usa-input" value="{{ user.organization.name if user.organization else '' }}">
+        <label for "organization" class="usa-label">Organization:</label>
+        <input type="text" name="organization" class="usa-input" value="{{ user.organization.name if user.organization else '' }}">
 
-      <label for="notes" class="usa-label">Notes (How do you plan to use the tool?):</label>
-      <textarea name="notes" class="usa-textarea">{{ user.notes }}</textarea>
+        <label for="notes" class="usa-label">Notes (How do you plan to use the tool?):</label>
+        <textarea name="notes" class="usa-textarea">{{ user.notes }}</textarea>
 
-      <button type="submit" class="usa-button">Update Profile</button>
-  </form>
+        <button type="submit" class="usa-button">Update Profile</button>
+    </form>
+
+    <h2 class="usa-heading">Your Queries</h2>
+    {% if queries %}
+        <table class="usa-table">
+            <thead>
+                <tr>
+                    <th>Query</th>
+                    <th>Response Type</th>
+                    <th>Response</th>
+
+                </tr>
+            </thead>
+            <tbody>
+                {% for query in queries %}
+                    <tr>
+                        <td>{{ query.query_text }}</td>
+                        <td>{{ query.response_type.name if query.response_type else 'N/A' }}</td>
+                        <td>{% if query.response %}{{ query.response.response_text }}{% else %}N/A{% endif %}</td>
+
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No queries found.</p>
+    {% endif %}
 </section>
-
 {% endblock %}

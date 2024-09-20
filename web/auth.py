@@ -19,7 +19,7 @@ from flask_limiter.util import get_remote_address
 
 
 # App Imports
-from mastermind.models import db, User, UserType, UserTypeEnum, Organization
+from mastermind.models import db, User, UserType, UserTypeEnum, Organization, Query
 
 from mastermind.utils.email import send_email
 from mastermind.utils.token_utils import generate_token, confirm_token
@@ -465,8 +465,8 @@ def profile():
 
             flash('An error occurred while updating your profile.', 'danger')
 
-
-    return render_template('auth/profile.html', user=current_user)
+    user_queries = Query.query.filter_by(user_id=current_user.user_id).all()
+    return render_template('auth/profile.html', user=current_user, queries=user_queries)
 
 @auth_bp.route('/profile/security', methods=['GET', 'POST'])
 @login_required

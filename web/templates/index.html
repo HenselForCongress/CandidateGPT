@@ -21,7 +21,11 @@
 
     <!-- Main content section -->
     {% if current_user.is_authenticated %}
-
+        <!-- Metrics and Recent Queries Section for logged in users -->
+        <section class="usa-section">
+            <h2 class="usa-section__heading">Recent Queries</h2>
+            <div id="queries-container">Loading...</div>
+        </section>
     {% else %}
 
     <!-- Important Notice Section -->
@@ -35,8 +39,6 @@
             <a href="{{ url_for('auth.register') }}" class="usa-button">Register Here</a>
         </div>
     </section>
-
-
     {% endif %}
 
     <!-- AI Power Section for non-logged-in users -->
@@ -55,15 +57,62 @@
     </section>
 
     {% if current_user.is_authenticated %}
-
+        <!-- Additional content for authenticated users -->
     {% else %}
-
-
-    <!-- Buttons for Create Account and Login -->
-    <div class="button-container">
-        <a href="{{ url_for('auth.register') }}" class="usa-button">Create Account</a>
-        <a href="{{ url_for('auth.login') }}" class="usa-button usa-button--secondary">Login</a>
-    </div>
+        <!-- Buttons for Create Account and Login -->
+        <div class="button-container">
+            <a href="{{ url_for('auth.register') }}" class="usa-button">Create Account</a>
+            <a href="{{ url_for('auth.login') }}" class="usa-button usa-button--secondary">Login</a>
+        </div>
     {% endif %}
 </div>
+
+<script>
+    async function fetchMetrics() {
+        try {
+            const response = await fetch('/metrics');
+            const data = await response.json();
+
+            if (data.error) {
+                throw new Error(data.error);
+            }
+
+            const queriesContainer = document.getElementById('queries-container');
+            queriesContainer.innerHTML = '';
+
+            const table = document.createElement('table');
+            table.className = 'usa-table';
+            table.innerHTML = `
+                <thead>
+                    <tr>
+                        <th>Query</th>
+                        <th>Response Type</th>
+                        <th>Response</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+            `;
+            const tbody = document.createElement('tbody');
+
+            data.recent_queries.forEach(query => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${query.query_text}</td>
+                    <td>${query.response_type ? query.response_type.name : 'N/A'}</td>
+                    <td>${query.response_text !== undefined ? query.response_text : 'N/A'}</td>
+                    <td>${new Date(query.created_at).toLocaleDateString()}</td>
+                `;
+                tbody.appendChild(row);
+            });
+
+            table.appendChild(tbody);
+            queriesContainer.appendChild(table);
+
+        } catch (error) {
+            console.error('Error fetching metrics:', error);
+        }
+    }
+
+    fetchMetrics();
+</script>
 {% endblock %}

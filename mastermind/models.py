@@ -131,11 +131,13 @@ Index('idx_users_email', User.email)
 class QuerySchema(Schema):
     id = fields.Integer()
     query_text = fields.String(required=True)
-    response_text = fields.String(required=True)
+    response_text = fields.String()  # Include response_text
+    response_type = fields.Nested('ResponseTypeSchema', only=['name'])  # Reference ResponseTypeSchema
     settings_selected = fields.String()
     timestamp = fields.DateTime()
     ip_address = fields.String(validate=validate.Length(max=45))
     user_id = fields.UUID()  # Foreign key to User
+    showcase = fields.Boolean()
     created_at = fields.DateTime()
     updated_at = fields.DateTime()
 
@@ -149,7 +151,7 @@ class Query(db.Model):
     response_id = db.Column(db.Integer, db.ForeignKey('logs.responses.id', ondelete='CASCADE'), nullable=True, comment="ID of the response received")
     response_type_id = db.Column(db.Integer, db.ForeignKey('meta.response_types.id', ondelete='SET NULL'), nullable=True, comment="Foreign key to the response type")
     settings_selected = db.Column(db.String(255), nullable=True, comment="Settings used when making the query")
-    timestamp = db.Column(db.DateTime, default=datetime.utcnow, comment="Time when the query was made")
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow, comment="Time when query was made")
     ip_address = db.Column(db.String(45), nullable=True, comment="IP address from which the query was made")
     user_id = db.Column(UUID(as_uuid=True), db.ForeignKey('entities.users.user_id', ondelete='CASCADE'), nullable=False, comment="ID of the user who made the query")
     showcase = db.Column(db.Boolean, default=False, nullable=False, comment="Indicates whether the query is marked for showcase")
@@ -157,12 +159,14 @@ class Query(db.Model):
     updated_at = db.Column(db.DateTime, default=func.now(), nullable=False, comment="Record last update date")
 
     response = db.relationship('Response', back_populates='query', uselist=False)  # Establish a bidirectional relationship with Response
-    response_type = db.relationship('ResponseType', backref='queries', lazy='joined')
+    response_type = db.relationship('ResponseType', lazy='joined')
 
     def serialize(self):
         """Serialize the Query object to a dictionary."""
         logger.debug(f"Serializing query {self.id}")
-        return QuerySchema().dump(self)
+        serialized_data = QuerySchema().dump(self)
+        serialized_data["response_text"] = self.response.response_text if self.response else None
+        return serialized_data
 
     def __repr__(self):
         return f"<Query {self.id} by User {self.user_id}>"
@@ -193,6 +197,10 @@ class ResponseSchema(Schema):
     query_id = fields.Integer()  # Foreign key to Query
     created_at = fields.DateTime()
     updated_at = fields.DateTime()
+
+class ResponseTypeSchema(Schema):
+    id = fields.Integer()
+    name = fields.String(required=True)
 
 # ResponseType Definition
 class ResponseType(db.Model):

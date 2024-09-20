@@ -1,8 +1,8 @@
 # web/app.py
-from flask import Blueprint, render_template, request, redirect, url_for
+from flask import Blueprint, render_template, request, redirect, url_for, jsonify
 from mastermind.utils import logger
 from flask_login import current_user, login_required
-
+from mastermind.models import Query, db
 
 
 web_bp = Blueprint('web_bp', __name__)
@@ -37,6 +37,24 @@ def about():
     except Exception as e:
         logger.error("💔 Oops, something went wrong while rendering the about page: %s", e)
         return "An error occurred", 500
+
+@web_bp.route('/metrics')
+def get_metrics():
+    """Get and display app metrics and recent queries."""
+    try:
+        total_queries = Query.query.count()
+        showcased_queries_count = Query.query.filter_by(showcase=True).count()
+        recent_queries = Query.query.order_by(Query.created_at.desc()).limit(5).all()  # Get 5 recent queries
+
+        data = {
+            "total_queries": total_queries,
+            "recent_queries": [query.serialize() for query in recent_queries]
+        }
+
+        return jsonify(data)
+    except Exception as e:
+        logger.error(f"Error retrieving metrics and recent queries: {e}")
+        return jsonify({"error": "Failed to retrieve data"}), 500
 
 # Error handler for 404
 @web_bp.app_errorhandler(404)
