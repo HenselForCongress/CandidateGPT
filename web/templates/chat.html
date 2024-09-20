@@ -26,6 +26,7 @@
 
     <form id="questionForm" class="usa-form">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"> <!-- Hidden CSRF token -->
+        <input type="hidden" id="userId" value="{{ current_user.email }}"> <!-- Hidden user ID I now this isn't ideal, but I'll fix it soon TODO -->
         <div class="form-container">
             <div class="question-input">
                 <label for="questionInput" class="usa-label">Your Question:</label>

@@ -4,10 +4,13 @@ import requests
 import yaml
 import json
 import re
+from datetime import datetime
+import pytz
 #from dotenv import load_dotenv
 from mastermind.utils import logger
 from mastermind.models import Query, db, Response
-from flask_login import current_user  # Import current_user directly
+from flask_login import current_user
+from langfuse.decorators import langfuse_context, observe
 
 # Load environment variables
 # load_dotenv()
@@ -135,54 +138,170 @@ def process_response(response):
 
     return result
 
+# Handle response generation
+@observe(as_type="generation", capture_input=True, capture_output=True)
 def generate_response(question, data, config):
-    """Generate a response using the OpenAI API based on the question provided and configuration settings."""
-    logger.debug("🎤 We're starting the generate_response function. Ready for it?")
+    """Main function to generate a response using the OpenAI API."""
+    logger.debug("🎤 Starting the generate_response function.")
 
-    data_content = "\n\n".join(data.values())
-    user_prompt = config['ai']['prompt']
-    logger.debug("Loaded user prompt from config. Shake it off!")
+    # Prepare data
+    full_prompt = prepare_full_prompt(data, config, question)
 
-    # Construct prompts and headers
-    system_prompt = construct_system_prompt()
-    full_prompt = construct_full_prompt(user_prompt, data_content, question)
-    headers = prepare_headers()
-    json_data = prepare_json_payload(system_prompt, full_prompt, config)
-
-    # Log the query to the database
+    # Log the query
     query_record = log_query(question, config)
 
     try:
-        logger.info("Sending request to OpenAI API. Are you ready for it?")
-        response = requests.post(
-            f"https://gateway.ai.cloudflare.com/v1/{CLOUDFLARE_ACCOUNT_ID}/{CLOUDFLARE_AI_GATEWAY}/openai/chat/completions",
-            headers=headers,
-            json=json_data
-        )
-        logger.debug(f"Received response with status code {response.status_code}. Everything has changed!")
+        # Execute the OpenAI API call
+        response = send_openai_request(full_prompt, config)
 
-        # Process the response
+        # Process the response and log results
         result = process_response(response)
-
-        # Save the response to the database
-        if result['answer']:
-            new_response = Response(response_text=result['answer'])
-            db.session.add(new_response)
-            db.session.flush()  # Flush to get the new response ID
-
-            # Update the query with the response ID
-            query_record.response_id = new_response.id
-            db.session.commit()
-            logger.info("Response saved and query updated successfully.")
-
+        if response.status_code == 200:
+            log_token_usage(response.json().get('usage', {}), config, full_prompt)
+            save_response_to_db(result['answer'], query_record)
+            logger.info(f"Response generated successfully for question: {question}")
+        else:
+            logger.error(f"Failed API response: {response.status_code}")
     except Exception as e:
-        logger.exception("An exception occurred during the API request.")
+        logger.exception("Error during response generation")
         result = {
             'answer': f"Exception: {str(e)}",
             'warning': '',
             'links': []
         }
-        db.session.rollback()  # Rollback in case of an error
-
-    logger.debug("Finished processing the generate_response function.")
+        db.session.rollback()
     return result
+
+
+def log_token_usage(usage_data, config, full_prompt):
+    """Log token usage and generation-specific parameters to Langfuse."""
+    prompt_tokens = usage_data.get('prompt_tokens', 0)
+    completion_tokens = usage_data.get('completion_tokens', 0)
+    total_tokens = usage_data.get('total_tokens', prompt_tokens + completion_tokens)
+
+    logger.debug(f"Token usage: Prompt: {prompt_tokens}, Completion: {completion_tokens}, Total: {total_tokens}")
+
+    # Extract dynamic model parameters from config['ai']['settings']
+    model_parameters = config['ai'].get('settings', {})
+
+    # Prepare usage payload
+    usage_payload = {
+        "prompt_tokens": prompt_tokens,
+        "completion_tokens": completion_tokens,
+        "total_tokens": total_tokens,
+        "unit": "TOKENS"
+    }
+
+    # Capture completion start time in EST
+    est = pytz.timezone('US/Eastern')
+    completion_start_time = datetime.now(est)
+
+    # Send the update to Langfuse with generation-specific params
+    langfuse_context.update_current_observation(
+        usage=usage_payload,
+        model=config['ai']['model'],
+        metadata={"model": config['ai']['model']},
+        completion_start_time=completion_start_time,
+        model_parameters=model_parameters,
+        public=True
+    )
+
+    logger.debug(f"Langfuse Usage Payload:\n{usage_payload}")
+
+
+def prepare_full_prompt(data, config, question):
+    """Prepare the full prompt and headers for the OpenAI API request."""
+    user_prompt = config['ai']['prompt']
+    data_content = "\n\n".join(data.values())
+
+    full_prompt = construct_full_prompt(user_prompt, data_content, question)
+    logger.debug("Constructed full prompt.")
+
+    return full_prompt
+
+def send_openai_request(full_prompt, config):
+    """Send the request to the OpenAI API."""
+    headers = prepare_headers()
+    system_prompt = construct_system_prompt()
+    json_data = prepare_json_payload(system_prompt, full_prompt, config)
+
+    logger.info("Sending request to OpenAI API.")
+    response = requests.post(
+        f"https://gateway.ai.cloudflare.com/v1/{CLOUDFLARE_ACCOUNT_ID}/{CLOUDFLARE_AI_GATEWAY}/openai/chat/completions",
+        headers=headers,
+        json=json_data
+    )
+
+    logger.debug(f"Received response with status code {response.status_code}.")
+    return response
+
+def process_and_log_response(response, query_record, config):
+    """Process the API response and update logs, Langfuse, and the database."""
+    result = process_response(response)
+
+    # Check for successful response
+    if response.status_code == 200:
+        handle_successful_response(result, query_record, response, config)
+    else:
+        logger.error(f"API request failed: {response.status_code}")
+
+    return result
+
+def handle_successful_response(result, query_record, response, config):
+    """Handle a successful response, including logging token usage and saving data."""
+    usage_data = response.json().get('usage', {})
+    log_token_usage(usage_data, config)
+
+    # Save the response to the database
+    if result['answer']:
+        save_response_to_db(result['answer'], query_record)
+
+        # Log the successful response processing with Langfuse
+        log_langfuse_success(query_record.response_id, result['answer'], config)
+
+def log_langfuse_success(response_id, answer, config):
+    """Log the successful processing of the response in Langfuse."""
+    langfuse_context.update_current_observation(
+        output={"response_id": response_id, "answer": answer},
+        name="ai_query_success",
+        metadata={
+            "api_key": "OpenAI",
+            "model": config['ai']['model'],
+            "prompt": config['ai']['prompt'],
+            "model_parameters": config['ai'].get('settings', {})
+        },
+        tags=["ai", "openai", "success"],
+        public=True
+    )
+
+def save_response_to_db(answer, query_record):
+    """Save the generated response to the database."""
+    new_response = Response(response_text=answer)
+    db.session.add(new_response)
+    db.session.flush()  # Get the new response ID
+
+    # Update the query with the response ID
+    query_record.response_id = new_response.id
+    db.session.commit()
+
+    logger.info("Response saved and query updated successfully.")
+
+def handle_request_error(e, query_record, config):
+    """Handle errors during the API request."""
+    logger.exception("An exception occurred during the API request.")
+    db.session.rollback()
+
+    # Log error with Langfuse
+    langfuse_context.update_current_observation(
+        output={"error": str(e)},
+        name="ai_query_error",
+        metadata={"api_key": "OpenAI", "model": config['ai']['model']},
+        tags=["ai", "openai", "error"],
+        public=False  # Keep errors private
+    )
+
+    return {
+        'answer': f"Exception: {str(e)}",
+        'warning': '',
+        'links': []
+    }

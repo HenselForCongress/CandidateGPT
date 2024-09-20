@@ -28,6 +28,7 @@ flask-limiter = "^3.8.0"
 email-validator = "^2.2.0"
 sentry-sdk = "^2.14.0"
 langfuse = "^2.50.2"
+pytz = "^2024.2"
 
 
 [tool.poetry.group.dev.dependencies]

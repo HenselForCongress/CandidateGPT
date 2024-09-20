@@ -75,13 +75,15 @@ document.getElementById('questionForm').onsubmit = async function(event) {
     event.preventDefault();
     const questionInput = document.getElementById('questionInput').value;
     const responseContainer = document.getElementById('response');
+
     responseContainer.innerHTML = '';  // Clear previous response
 
     // Get the selected response type
     const responseType = document.querySelector('input[name="responseType"]:checked').value;
 
-    // Get the CSRF token
+    // Get the CSRF token and userId
     const csrfToken = document.querySelector('input[name="csrf_token"]').value;
+    const userId = document.getElementById('userId').value;
 
     // Show loading indicator before initiating the fetch
     responseContainer.innerHTML = '<div class="loading-spinner"></div>';
@@ -95,13 +97,14 @@ document.getElementById('questionForm').onsubmit = async function(event) {
     });
 
     try {
-        console.log('Sending request to /api/ask with:', { question: questionInput, response_type: responseType });
+        console.log('Sending request to /api/ask with:', { question: questionInput, response_type: responseType, userId: userId });
 
         const response = await fetch('/api/ask', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRFToken': csrfToken  // Include CSRF token in the headers
+                'X-CSRFToken': csrfToken,
+                'User-ID': userId
             },
             body: JSON.stringify({ question: questionInput, response_type: responseType })
         });
