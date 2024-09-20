@@ -120,9 +120,11 @@ def process_response(response):
             try:
                 answer_data = json.loads(json_str)
                 result['answer'] = answer_data.get('answer', '')
-                inference = answer_data.get('inference', False)
-                if inference:
+                result['inference'] = answer_data.get('inference', False)
+
+                if result['inference']:
                     result['warning'] = "The response uses inference or content not directly mentioned in the source data."
+
                 result['links'] = answer_data.get('links', [])
             except json.JSONDecodeError as e:
                 logger.error(f"Failed to parse assistant's response as JSON: {e}")

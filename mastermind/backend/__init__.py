@@ -1,6 +1,7 @@
 # mastermind/backend/__init__.py
 from flask import Blueprint, request, jsonify, abort
 from flask_login import login_required, current_user
+import json
 import yaml
 #from dotenv import load_dotenv
 from mastermind.data_manager.load import load_data
@@ -63,6 +64,8 @@ def ask_question():
         # Generate the AI response
         response_result = generate_response(full_prompt, data, config)
         response_text = response_result.get('answer', '')
+        warning = response_result.get('warning', '')
+        links = response_result.get('links', [])
 
         logger.info(f"Response generated successfully for question: {user_question}")
 
@@ -87,7 +90,8 @@ def ask_question():
             response_type_id=response_type_record.id if response_type_record else None,
             user_id=user_id,
             showcase=showcase,
-            ip_address=request.remote_addr
+            ip_address=request.remote_addr,
+            settings_selected=json.dumps(config['ai']['settings'])  # Store the settings
         )
         db.session.add(query)
         db.session.commit()
@@ -95,14 +99,18 @@ def ask_question():
         langfuse_context.update_current_observation(
             user_id=user_id,
             input={"question": user_question, "response_type": response_type},
-            output={"answer": response_text},
+            output={
+                "answer": response_text,
+                "warning": warning,
+                "links": links
+            },
             name="api_response_generated",
             metadata={"endpoint": "/api/ask", "response_type": response_type},
             tags=[f"Response Type: {response_type}"],
             public=True
         )
 
-        return jsonify({"answer": response_text})
+        return jsonify({"answer": response_text, "warning": warning, "links": links})
 
     except Exception as e:
         logger.error(f"Error generating response: {e}", exc_info=True)
