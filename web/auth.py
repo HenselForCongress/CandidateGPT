@@ -7,6 +7,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
 from wtforms import StringField, PasswordField
 from wtforms.validators import DataRequired, Email
+import pytz
 from langfuse.decorators import langfuse_context, observe
 
 # Flask
@@ -94,6 +95,12 @@ def login():
         user = User.query.filter_by(email=email).first()
         if user and user.is_active and user.check_password(password):
             login_user(user)
+
+            # Update last_login field
+            est = pytz.timezone('US/Eastern')
+            user.last_login = datetime.now(est)
+            db.session.commit()
+
             logger.info(f"User {user.email} logged in from IP {request.remote_addr}.")
             flash('Logged in successfully!', 'success')
 
@@ -106,7 +113,6 @@ def login():
                 tags=['authentication', 'login'],
                 public=True
             )
-
 
             return redirect(url_for('web_bp.index'))
         else:
