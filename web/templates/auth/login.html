@@ -5,6 +5,17 @@
 
 {% block content %}
 <section class="usa-section">
+<!-- Important Notice Section -->
+<section class="usa-section usa-alert usa-alert--warning">
+    <div class="usa-alert__body">
+        <h3 class="usa-alert__heading">Database Maintence</h3>
+        <p class="usa-alert__text">
+            During a recent system upgrade, some database records were corrupted. As this app is still in beta, a backup system was not yet in place. If you are unable to log in, please create a new account and email team@henselforcongress.com to have it activated. We apologize for the inconvenience.
+        </p><br>
+        <a href="{{ url_for('auth.register') }}" class="usa-button">Register Here</a>
+    </div>
+</section>
+
     <h2 class="usa-heading">Login</h2>
     <form method="POST" class="usa-form">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"> <!-- Hidden CSRF token -->
