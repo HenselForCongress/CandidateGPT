@@ -75,10 +75,13 @@ services:
     ports:
       - ${LANGFLOW_PORT}:${LANGFLOW_PORT}
     depends_on:
-      - db_postgres
-      - redis
+      db_postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     volumes:
       - cgpt-langflow:/var/lib/langflow
+      - /Users/bhensel/repos/HenselForCongress/CandidateGPT/data:/training_data
     environment:
       LANGFLOW_DATABASE_URL: postgresql://langflow_app:${LANGFLOW_POSTGRES_PASSWORD}@db_postgres:5432/langflow
       LANGFLOW_PORT: ${LANGFLOW_PORT}
