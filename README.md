@@ -25,6 +25,21 @@ Run Security Test
 `poetry run bandit -r .`
 
 
+
+## Auxiliary Services
+
+
+### Langflow
+[GitHub](https://github.com/langflow-ai/langflow)
+
+[Docker Deploy Docs](https://github.com/langflow-ai/langflow/blob/main/docker_example/docker-compose.yml)
+https://github.com/langflow-ai/langflow/blob/main/.env.example
+
+### Langfuse
+
+[Integration with Langflow](https://langfuse.com/docs/integrations/langflow)
+
+
 ## License
 
 All repositories under the Hensel for Congress organization are licensed under the GNU Affero General Public License version 3.0 (AGPL-3.0). You are free to use, copy, distribute, and modify the software as long as any modifications or derivative works are also licensed under AGPL-3.0. This ensures that the source code remains available to users interacting with the software over a network, promoting transparency and the freedom to modify networked software.
