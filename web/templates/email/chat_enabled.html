@@ -1,10 +1,10 @@
-<!-- templates/email/new_user_alert.html -->
+<!-- web/templates/email/chat_enabled.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>New User Registered</title>
+    <title>Welcome to CandidateGPT!</title>
     <style>
         body {
             font-family: "Source Sans Pro", Arial, sans-serif;
@@ -86,14 +86,11 @@
             <img src="https://content.henselforcongress.com/goodies/HFC_Logo_Wider.png" alt="CandidateGPT Logo" class="logo">
         </div>
         <div class="content">
-            <h1>New User Registered</h1>
-            <p>A new user has registered:</p>
-            <ul>
-                <li>Email: {{ user.email }}</li>
-                <li>Given Name: {{ user.given_name or 'N/A' }}</li>
-                <li>Family Name: {{ user.family_name or 'N/A' }}</li>
-            </ul>
-            <p>Visit the admin panel for more details.</p>
+            <h1>Welcome to CandidateGPT!</h1>
+            <p>Dear {{ user.email }},</p>
+            <p>Welcome to CandidateGPT! Your account has been created.</p>
+            <p>Now you can talk to DOn beyer!</p>
+            <p>Thank you,<br>CandidateGPT Team</p>
         </div>
         <div class="footer">
             <p>
@@ -107,3 +104,9 @@
     </div>
 </body>
 </html>
+
+
+
+
+
+

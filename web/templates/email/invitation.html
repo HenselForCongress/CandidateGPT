@@ -1,4 +1,3 @@
-<!-- templates/email/invitation.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -37,15 +36,19 @@
         }
         .button {
             display: inline-block;
-            padding: 10px 20px;
-            color: #ffffff; /* Ensuring white text */
+            padding: 14px 28px; /* Increased size */
+            color: #ffffff; /* White text */
             background-color: #005A9C; /* Darker shade of blue */
-            border-radius: 5px;
+            border-radius: 8px; /* More rounded edges */
             text-decoration: none;
-            font-size: 16px;
+            font-size: 18px; /* Slightly larger text */
+            font-weight: bold; /* Bold text */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Shadow for depth */
+            border: 2px solid #003f7f; /* Darker blue border */
         }
         .button:hover {
             background-color: #003f7f; /* Even darker shade for hover effect */
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3); /* Increased shadow on hover */
         }
         .footer {
             text-align: center;
@@ -88,6 +91,8 @@
             <p><a href="{{ url_for('auth.reset_password', token=token, _external=True) }}" class="button">Set Your Password</a></p>
             <p>If you did not expect this email, please ignore it.</p>
             <p>Thank you,<br>CandidateGPT Team</p>
+            <br><p>If the above link doesn't work for you, click the below ugly link</p>
+            <p>{{ url_for('auth.reset_password', token=token, _external=True) }}</p>
         </div>
         <div class="footer"><br>
             <p>
