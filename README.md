@@ -11,17 +11,9 @@
 </div>
 
 
-CandidateGPT is actively under development, focusing on refining features and ensuring transparent AI interactions in political discussions. We welcome contributors to explore our backlog, work on enhancing response accuracy, and help expand our data sources. Join us in shaping the future of political communication.
+CandidateGPT is actively under development, focusing on refining features and ensuring transparent AI interactions in political discussions. By utilizing advanced AI technology from OpenAI, CandidateGPT mirrors the candidate’s positions, providing an interactive and direct engagement tool for voters. We are working to transform political discourse through meaningful conversations between candidates and constituents.
 
-
-### How It Works
-CandidateGPT employs advanced AI technology developed by OpenAI to generate context-aware and accurate chatbot responses. By using a comprehensive dataset of official documents and public statements, the bot mirrors the candidate’s positions, offering voters an interactive tool for direct and informed engagement. This setup transforms political discourse by enabling meaningful conversations between candidates and constituents.
-
-
-
-### Note on Current Status
-CandidateGPT is currently in the active development phase, with ongoing efforts to refine its features and ensure effective and transparent AI interactions within political discussions. We invite contributors to check out our backlog as we tackle immediate goals, such as improving response accuracy and expanding data sources. Feel free to engage with us and contribute to the future of political communication.
-
+We welcome contributors to help us enhance response accuracy, expand data sources, and shape the future of political communication. Join us as we build a more transparent political system.
 
 ## Getting Started
 
