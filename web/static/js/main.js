@@ -185,3 +185,17 @@ document.getElementById('reloadData').addEventListener('click', function() {
 
 // Load response types on page load
 loadResponseTypes();
+
+// Add UTMs to resource links -- gotta let Don know where all this traffic is coming from.
+function createLinkElement(url, text) {
+    // Append the query parameters to the URL
+    const queryParameters = "?utm_source=CandidateGPT_DonBot&utm_medium=chat_resources";
+    const updatedUrl = url + queryParameters;
+
+    const link = document.createElement('a');
+    link.href = updatedUrl;
+    link.textContent = text;
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    return link;
+}
