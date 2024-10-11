@@ -124,7 +124,7 @@ body {
 .question-input {
     flex: 2;
     margin-right: 20px;
-    min-width: 50%;
+    min-width: 100%;
 }
 
 #questionInput {

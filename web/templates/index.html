@@ -24,18 +24,26 @@
         <!-- Placeholder -->
     {% else %}
 
-    <!-- Important Notice Section -->
-    <section class="usa-section usa-alert usa-alert--info">
-        <div class="usa-alert__body">
-            <h3 class="usa-alert__heading">Important Notice</h3>
-            <p class="usa-alert__text">
-                You need an account to run a query. Please <strong>register</strong> first, then email team@henselforcongress.com to activate it.<br><br>
-                This requirement will be lifted once we have better security measures in place to prevent abuse. If you'd like to help improve the system, you can <a href="https://github.com/HenselForCongress/CandidateGPT/issues" target="_blank">contribute here</a>.
-            </p><br><br>
-            <a href="{{ url_for('auth.register') }}" class="usa-button">Register Here</a>
-        </div>
-    </section>
+   <!-- Important Notice Section -->
+   <section class="usa-section usa-alert usa-alert--info">
+       <div class="usa-alert__body">
+           <h3 class="usa-alert__heading">PotusGPT Launches Soon!</h3>
+           <p class="usa-alert__text">
+               Mark your calendars! On October 29th, just one week before Election Day, we're unveiling a groundbreaking new feature that allows you to directly question the presidential candidates of the United States. Stay informed and engage in the democratic process like never before.
+           </p>
+           <br><br>
+           <a href="{{ url_for('web_bp.potus') }}" class="usa-button">Learn More</a>
+       </div>
+   </section>
     {% endif %}
+    <!-- Important Notice Section -->
+    <section class="usa-section usa-section--primary">
+    <h3 class="usa-alert__heading">Important Notice</h3>
+    <p class="usa-alert__text">
+        You need an account to run a query. Please <strong>register</strong> first, then email team@henselforcongress.com to activate it.<br><br>
+        This requirement will be lifted once we have better security measures in place to prevent abuse. If you'd like to help improve the system, you can <a href="https://github.com/HenselForCongress/CandidateGPT/issues" target="_blank">contribute here</a>.
+    </section>
+
 
     <!-- AI Power Section for non-logged-in users -->
     <section class="usa-section usa-section--primary">
