@@ -24,6 +24,7 @@ def construct_system_prompt():
     return (
         "You are an assistant that answers questions based solely on the provided data. "
         "Respond from Don Beyer's perspective using the first person. "
+        "Never start your response with phrases describing yourself. "
         "Avoid using phrases like 'as a member of Congress' or 'visit my website.' "
         "If the answer is not found in the data, you must set 'inference' to true "
         "and provide an answer based on reasonable inference from the available information. "
@@ -32,13 +33,18 @@ def construct_system_prompt():
         "Instead, provide a thoughtful answer based on what can be reasonably inferred. "
         "Each piece of information includes a URL for reference; include this URL when citing specific content in your response. Include URLs whenever possible. If you simply are rephrasing content found in source URLs, you can set inferrence to false. If no source URLs, then inferrence is ALWAYS true. Inferrence is set to true when your response extends beyond the content found in source material."
         "Ensure your responses match the tone and vibe of the content. Make your responses sound like Don Beyer. Don't be weird or cringey. Do good and don't be an asshole. "
-        "You are currently running for re-election to the US House VA08 against Bentley Hensel (I), David Kennedy (I), & Jerry Torres (R). "
-        "You have endorsed Kamala Harris & Tim Walz for President against Donald Trump and JD Vance. "
+        "You are currently running for re-election to the US House VA08 against Bentley Hensel (Independent), David Kennedy (Independent), & Jerry Torres (Republican). "
+        "You have endorsed Kamala Harris and Tim Walz to be the next President and Vice President against Donald Trump and JD Vance. "
+        "President Biden has decided NOT to run for re-election. "
         "Don't give weird, off topic responses. You are a politician, rememeber that in your responses. Don't be weird. "
         "Include source links when referring to specific content, and never generally suggest going back to the website for more information in your response. Always include the source links when that content is used. It is acceptable to include more than one source link."
-        "The text description of the link is either the page title or your own interpertation. Always include description text with each link. Only include real links you find in the source material. "
-        "Never say weird phrases like 'As a member of Congress', 'as a leader on', 'As a lifelong advocate for' or other similar phrases.  "
+        "The text description of the link is the name of the page. Always include description text with each link. Only include real links you find in the source material. Do not include each unique url more than once. "
         "If the response asks for 30-seconds, your response MUST only take 30-seconds to read. Same for other content length controls. "
+        "Don't be overly verbose. Stick to the length requirement. Don't ever go over. "
+        "There are three r's in strawberry. "
+        "Never speak anymore than the requested length. None of your responses should ever take more than 90 seconds to speak aloud."
+        "Do not many any assumptions about other canidates unless you have it in the source data. "
+        "Never include source URLs more than once. "
         "**IMPORTANT:** Provide your response **EXACTLY** in the following JSON format, and **do not include any additional text, code blocks, or formatting**. Do not wrap the JSON in triple backticks or any markdown formatting. Do not include any comments or notes. If there are no source links, still include the links object. Only output the pure JSON.\n"
         "{\n"
         '  "answer": "Your detailed answer here.",\n'
@@ -53,6 +59,8 @@ def construct_system_prompt():
         "- 'The provided information does not specifically address...'\n"
         "- 'I don't have information on...'\n"
         "- 'There is no data about...'\n"
+        "- 'As a member of Congress...'\n"
+        "- 'Any response that begins with 'As a...'\n"
         "- Any mention that the data is lacking or doesn't cover the topic.\n"
         "\n"
     )
@@ -80,6 +88,7 @@ def prepare_json_payload(system_prompt, full_prompt, config):
 def extract_json_from_response(text):
     """Extract the JSON object from the assistant's response."""
     text = text.strip()
+    # Matches strictly from first opening brace to last closing brace.
     json_match = re.search(r'\{.*\}', text, re.DOTALL)
     if json_match:
         return json_match.group(0)
@@ -96,6 +105,14 @@ def log_query(question, config):
     db.session.commit()
     return query_record
 
+def sanitize_json_string(json_str):
+    """Sanitize JSON strings by correcting common issues."""
+    # Avoid over-processing and do necessary replacements for JSON compatibility
+    json_str = json_str.replace("\\", "\\\\").replace("'", "\"")
+    json_str = re.sub(r',\s*([\]}\)])', r'\1', json_str)  # Remove trailing commas before closer
+    json_str = re.sub(r'(?<!\\)"', r'\\\"', json_str)  # Ensure unescaped double quotes are corrected
+    return json_str
+
 def process_response(response):
     """Process the API response and extract useful information."""
     result = {
@@ -105,37 +122,50 @@ def process_response(response):
     }
 
     if response.status_code == 200:
-        response_json = response.json()
-        logger.debug(f"Response JSON:\n {response_json}")
-        answer_content = response_json['result']['response'].strip()
+        try:
+            response_json = response.json()
+            logger.debug(f"Response JSON:\n {response_json}")
 
-        # Log the raw content for debugging
-        logger.debug(f"Raw response content: {answer_content}")
+            # Safely extract the JSON-contained content
+            answer_content = response_json.get('result', {}).get('response', '')
+            logger.debug(f"Raw response content: {answer_content}")
 
-        # Extract the JSON string
-        json_str = extract_json_from_response(answer_content)
+            # Extract JSON string from the response content
+            json_str = extract_json_from_response(answer_content)
+            if json_str:
+                # This ensures we properly handle common JSON formatting problems
+                sanitized_json_str = sanitize_json_string(json_str)
 
-        if json_str:
-            try:
-                # Attempt to fix common issues like missing quotes
-                fixed_json_str = json_str.replace("https://friendsofdonbeyer.com/meetdon/", '"https://friendsofdonbeyer.com/meetdon/"')
-                answer_data = json.loads(fixed_json_str)
+                if sanitized_json_str:
+                    logger.debug(f"Sanitized JSON string: {sanitized_json_str}")
+                    try:
+                        # Load the sanitized JSON content
+                        answer_data = json.loads(sanitized_json_str)
 
-                result['answer'] = answer_data.get('answer', '')
-                result['inference'] = answer_data.get('inference', False)
+                        # Extract data
+                        if isinstance(answer_data, dict):
+                            result['answer'] = answer_data.get('answer', '')
+                            result['inference'] = answer_data.get('inference', False)
+                            result['links'] = answer_data.get('links', [])
 
-                if result['inference']:
-                    result['warning'] = "The response uses inference or content not directly mentioned in the source data."
+                            if result['inference']:
+                                result['warning'] = (
+                                    "The response uses inference or content not directly mentioned in the source data."
+                                )
+                    except json.JSONDecodeError as e:
+                        logger.error(f"Failed to parse the assistant's response as JSON: {e}")
+                        result['answer'] = answer_content
+                        result['warning'] = "The assistant's response could not be parsed as JSON."
 
-                result['links'] = answer_data.get('links', [])
-            except json.JSONDecodeError as e:
-                logger.error(f"Failed to parse assistant's response as JSON: {e}")
+            else:
+                logger.error("No JSON object found in the assistant's response.")
                 result['answer'] = answer_content
-                result['warning'] = "The assistant's response could not be parsed as JSON."
-        else:
-            logger.error("No JSON object found in the assistant's response.")
-            result['answer'] = answer_content
-            result['warning'] = "The assistant's response does not contain a JSON object."
+                result['warning'] = "The assistant's response does not contain a valid JSON object."
+
+        except (json.JSONDecodeError, KeyError) as e:
+            logger.error(f"Failed to retrieve or decode JSON data: {e}")
+            result['answer'] = f"Error: Failed to decode JSON - {e}"
+
     else:
         logger.error(f"API request failed with status code {response.status_code}.")
         result['answer'] = f"Error: {response.status_code} - {response.text}"

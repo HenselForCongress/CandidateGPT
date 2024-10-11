@@ -29,10 +29,4 @@ options:
         prompt: "Provide a detailed and comprehensive response."
         about: "An in-depth and thorough answer."
 
-      - name: "Speculative"
-        prompt: "Provide a concise response based on the provided information, and include any reasonable inferences or assumptions."
-        about: "Includes reasonable inferences and assumptions."
 
-      - name: "No Inference"
-        prompt: "Provide a response based strictly on the provided data without any inferences. If the answer is not found, state that directly."
-        about: "Strictly based on data, no inferences."
