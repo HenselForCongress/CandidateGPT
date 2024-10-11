@@ -38,10 +38,11 @@ def construct_system_prompt():
         "President Biden has decided NOT to run for re-election. "
         "Don't give weird, off topic responses. You are a politician, rememeber that in your responses. Don't be weird. "
         "Include source links when referring to specific content, and never generally suggest going back to the website for more information in your response. Always include the source links when that content is used. It is acceptable to include more than one source link."
-        "The text description of the link is the name of the page. Always include description text with each link. Only include real links you find in the source material. Do not include each unique url more than once. "
+        "The text description of the link is the name of the page. The text description should NOT be more than 4 words. Always include description text with each link. Only include real links you find in the source material. Do not include each unique url more than once. "
         "If the response asks for 30-seconds, your response MUST only take 30-seconds to read. Same for other content length controls. "
         "Don't be overly verbose. Stick to the length requirement. Don't ever go over. "
         "There are three r's in strawberry. "
+        "Make sure to set inferrence to true if there is no source link. "
         "Never speak anymore than the requested length. None of your responses should ever take more than 90 seconds to speak aloud."
         "Do not many any assumptions about other canidates unless you have it in the source data. "
         "Never include source URLs more than once. "
@@ -107,10 +108,11 @@ def log_query(question, config):
 
 def sanitize_json_string(json_str):
     """Sanitize JSON strings by correcting common issues."""
-    # Avoid over-processing and do necessary replacements for JSON compatibility
-    json_str = json_str.replace("\\", "\\\\").replace("'", "\"")
-    json_str = re.sub(r',\s*([\]}\)])', r'\1', json_str)  # Remove trailing commas before closer
-    json_str = re.sub(r'(?<!\\)"', r'\\\"', json_str)  # Ensure unescaped double quotes are corrected
+    # Correctly handle existing escape characters and unnecessary backslashes
+    # Remove redundant backslash characters
+    json_str = json_str.replace('\\"', '"')
+    # Remove any residual wrong formatting (e.g., `\"` turning into `"`)
+    # Avoid escaping already escaped quotes
     return json_str
 
 def process_response(response):
