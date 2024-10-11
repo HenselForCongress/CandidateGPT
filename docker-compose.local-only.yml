@@ -29,42 +29,7 @@ services:
     ports:
       - ${POSTGRES_PORT}:5432
 
-  langfuse:
-    container_name: langfuse
-    hostname: langfuse
-    image: langfuse/langfuse:latest
-    restart: always
-    depends_on:
-      db_postgres:
-        condition: service_healthy
-    environment:
-      SALT: ${LANGFUSE_SALT}
-      DATABASE_HOST: db_postgres
-      DATABASE_USERNAME: langfuse_app
-      DATABASE_PASSWORD:  ${LANGFUSE_POSTGRES_PASSWORD}
-      DATABASE_NAME: langfuse
-     # NEXTAUTH_URL: ${NEXTAUTH_URL}
-      NEXTAUTH_URL: http://localhost:5025
-      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
-      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
-      PORT: ${LANGFUSE_PORT}
-      SMTP_CONNECTION_URL: ${SMTP_CONNECTION_URL}
-      EMAIL_FROM_ADDRESS: ${SMTP_SENDER_EMAIL}
-      LANGFUSE_LOG_LEVEL: ${LOG_LEVEL}
-      # Setup
-      LANGFUSE_INIT_ORG_ID: ${LANGFUSE_INIT_ORG_ID}
-      LANGFUSE_INIT_ORG_NAME: ${LANGFUSE_INIT_ORG_NAME}
-      LANGFUSE_INIT_PROJECT_ID: ${LANGFUSE_INIT_PROJECT_ID}
-      LANGFUSE_INIT_PROJECT_NAME: ${LANGFUSE_INIT_PROJECT_NAME}
-      LANGFUSE_INIT_PROJECT_PUBLIC_KEY: ${LANGFUSE_INIT_PROJECT_PUBLIC_KEY}
-      LANGFUSE_INIT_PROJECT_SECRET_KEY: ${LANGFUSE_INIT_PROJECT_SECRET_KEY}
-      LANGFUSE_INIT_USER_EMAIL: ${LANGFUSE_INIT_USER_EMAIL}
-      LANGFUSE_INIT_USER_NAME: ${LANGFUSE_INIT_USER_NAME}
-      LANGFUSE_INIT_USER_PASSWORD: ${LANGFUSE_INIT_USER_PASSWORD}
-    ports:
-      - ${LANGFUSE_PORT}:${LANGFUSE_PORT}
-    networks:
-      - candidategpt
+
 
   langflow:
     container_name: langflow

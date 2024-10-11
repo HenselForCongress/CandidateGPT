@@ -17,6 +17,7 @@ from langfuse.decorators import langfuse_context, observe
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 CLOUDFLARE_ACCOUNT_ID = os.getenv("CLOUDFLARE_ACCOUNT_ID")
 CLOUDFLARE_AI_GATEWAY = os.getenv("CLOUDFLARE_AI_GATEWAY")
+CLOUDFLARE_API_TOKEN = os.getenv("CLOUDFLARE_API_TOKEN")
 
 def construct_system_prompt():
     """Construct the system prompt for the AI model."""
@@ -30,7 +31,7 @@ def construct_system_prompt():
         "Do not include phrases like 'the provided information does not specifically address...', 'I don't have information on...', 'There is no data about...', or any similar statements.** "
         "Instead, provide a thoughtful answer based on what can be reasonably inferred. "
         "Each piece of information includes a URL for reference; include this URL when citing specific content in your response. "
-        "Only include source links when referring to specific content, and never suggest going back to the website for more information. "
+        "Only include source links when referring to specific content, and never generally suggest going back to the website for more information in your response. Always include the source links when that content is used. It is acceptable to include more than one source link."
         "**IMPORTANT:** Provide your response **EXACTLY** in the following JSON format, and **do not include any additional text, code blocks, or formatting**. Do not wrap the JSON in triple backticks or any markdown formatting. Do not include any comments or notes. Only output the pure JSON.\n"
         "{\n"
         '  "answer": "Your detailed answer here.",\n'
@@ -62,29 +63,22 @@ def construct_full_prompt(user_prompt, data_content, question):
 def prepare_headers():
     """Prepare the headers for the API request."""
     return {
-        "Authorization": f"Bearer {OPENAI_API_KEY}",
+        "Authorization": f"Bearer {CLOUDFLARE_API_TOKEN}",
         "Content-Type": "application/json"
     }
 
 def prepare_json_payload(system_prompt, full_prompt, config):
     """Prepare the JSON payload for the API request."""
-    json_data = {
-        "model": config['ai']['model'],
+    return {
         "messages": [
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": full_prompt}
         ]
     }
-    json_data.update(config['ai']['settings'])  # Add settings from config
-    return json_data
 
 def extract_json_from_response(text):
     """Extract the JSON object from the assistant's response."""
     text = text.strip()
-    if text.startswith('```') and text.endswith('```'):
-        text = text[3:-3].strip()
-        if text.lower().startswith('json'):
-            text = text[4:].strip()
     json_match = re.search(r'\{.*\}', text, re.DOTALL)
     if json_match:
         return json_match.group(0)
@@ -111,14 +105,21 @@ def process_response(response):
 
     if response.status_code == 200:
         response_json = response.json()
-        answer_content = response_json['choices'][0]['message']['content'].strip()
+        logger.debug(f"Response JSON:\n {response_json}")
+        answer_content = response_json['result']['response'].strip()
+
+        # Log the raw content for debugging
+        logger.debug(f"Raw response content: {answer_content}")
 
         # Extract the JSON string
         json_str = extract_json_from_response(answer_content)
 
         if json_str:
             try:
-                answer_data = json.loads(json_str)
+                # Attempt to fix common issues like missing quotes
+                fixed_json_str = json_str.replace("https://friendsofdonbeyer.com/meetdon/", '"https://friendsofdonbeyer.com/meetdon/"')
+                answer_data = json.loads(fixed_json_str)
+
                 result['answer'] = answer_data.get('answer', '')
                 result['inference'] = answer_data.get('inference', False)
 
@@ -143,22 +144,19 @@ def process_response(response):
 # Handle response generation
 @observe(as_type="generation", capture_input=True, capture_output=True)
 def generate_response(question, data, config):
-    """Main function to generate a response using the OpenAI API."""
+    """Main function to generate a response using the Cloudflare API."""
     logger.debug("🎤 Starting the generate_response function.")
 
-    # Prepare data
     full_prompt = prepare_full_prompt(data, config, question)
 
     try:
-        # Execute the OpenAI API call
-        response = send_openai_request(full_prompt, config)
+        # Construct the Cloudflare API call
+        response = send_request(full_prompt, config)
 
         # Process the response and log results
         result = process_response(response)
 
         if response.status_code == 200:
-            log_token_usage(response.json().get('usage', {}), config, full_prompt)
-            # Note: We will only return in this function, commit in the main route to avoid duplicate commits
             logger.info(f"Response generated successfully for question: {question}")
         else:
             logger.error(f"Failed API response: {response.status_code}")
@@ -221,15 +219,17 @@ def prepare_full_prompt(data, config, question):
 
     return full_prompt
 
-def send_openai_request(full_prompt, config):
-    """Send the request to the OpenAI API."""
+def send_request(full_prompt, config):
+    """Send the request to the AI API."""
     headers = prepare_headers()
     system_prompt = construct_system_prompt()
     json_data = prepare_json_payload(system_prompt, full_prompt, config)
 
-    logger.info("Sending request to OpenAI API.")
+    logger.debug(f"{json_data}")
+
+    logger.info("Sending request to  API.")
     response = requests.post(
-        f"https://gateway.ai.cloudflare.com/v1/{CLOUDFLARE_ACCOUNT_ID}/{CLOUDFLARE_AI_GATEWAY}/openai/chat/completions",
+        f"https://api.cloudflare.com/client/v4/accounts/{CLOUDFLARE_ACCOUNT_ID}/ai/run/@cf/meta/llama-3.1-8b-instruct",
         headers=headers,
         json=json_data
     )

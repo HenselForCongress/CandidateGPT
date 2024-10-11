@@ -39,6 +39,16 @@ def about():
         logger.error("💔 Oops, something went wrong while rendering the about page: %s", e)
         return "An error occurred", 500
 
+@web_bp.route('/potus')
+def potus():
+    """Render the about page."""
+    logger.info("☕ Look what you made me do, the user is curious about us.")
+    try:
+        return render_template('potus.html')
+    except Exception as e:
+        logger.error("💔 Oops, something went wrong while rendering the about page: %s", e)
+        return "An error occurred", 500
+
 @web_bp.route('/metrics')
 def get_metrics():
     """Get and display app metrics and recent queries."""
